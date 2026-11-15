@@ -7,6 +7,10 @@ Brainstorm is a message-mapping tool. Write the message you plan to send, then b
 - Drag empty space to pan. Ctrl/Cmd + scroll to zoom.
 - Your map is saved in your browser.
 
+## Bubbles
+
+The bubbles are measured from iPhone screenshots of iMessage: the same corner radius, tail, colors, text size and line spacing. Blue bubbles shade from lighter at the top of the map to deeper at the bottom, the way Messages does. On Apple devices the text uses SF Pro; elsewhere it uses the free Inter font, adjusted on load to match SF Pro's size, spacing and position.
+
 ## Run locally
 
 Open `index.html` in any modern browser. No install or server is needed.

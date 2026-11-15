@@ -1,14 +1,12 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Brainstorm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap">
 <style>
 /* Bubble geometry measured from the iPhone screenshot:
    one line = 22 px text + 10 px top/bottom padding (42 px body), corner radius 16 px,
    text inset 16 px. Colors: blue #028AFE, gray #E9E9E9, black text, white on blue. */
-:root{
-  --bub-me:#028AFE; --bub-them:#E9E9E9; --txt-me:#FFFFFF; --txt-them:#000000;
-  --tailR:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='21'%3E%3Cpath d='M0 0C0 12 5 18 20 21H0Z'/%3E%3C/svg%3E");
-  --tailL:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='21'%3E%3Cpath d='M20 0C20 12 15 18 0 21H20Z'/%3E%3C/svg%3E");
-}
+
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;padding:24px 28px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;background:#fff;color:#111}
 h1{font-size:22px;margin:0 0 12px}
@@ -30,19 +28,29 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 
 /* message nodes */
 .node{position:absolute;width:300px;display:flex;flex-direction:column;align-items:center}
-.node.hl .bubble{box-shadow:0 0 0 3px rgba(2,138,254,.35)}
-.node.sel .bubble{box-shadow:0 0 0 2px #111}
-.bubble{--c:var(--bub-them); position:relative; display:inline-block; max-width:300px; padding:10px 16px;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
-  font-size:17px; line-height:22px; letter-spacing:-.2px; text-align:left;
-  border-radius:16px; background:var(--c); color:var(--txt-them); overflow-wrap:break-word; white-space:pre-wrap; cursor:pointer; user-select:none}
-.bubble.me{--c:var(--bub-me); color:var(--txt-me)}
-.bubble.them{--c:var(--bub-them); color:var(--txt-them)}
-.bubble.editing{cursor:text;user-select:text;outline:none;box-shadow:0 0 0 2px rgba(2,138,254,.5)}
-.bubble.tail::after{content:""; position:absolute; bottom:0; width:10px; height:11px; background:var(--c);
-  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:100% 100%; mask-size:100% 100%}
-.bubble.me.tail::after{right:-5px; -webkit-mask-image:var(--tailR); mask-image:var(--tailR)}
-.bubble.them.tail::after{left:-5px; -webkit-mask-image:var(--tailL); mask-image:var(--tailL)}
+/* iMessage bubbles, measured from the iPhone screenshots (1 CSS px = 1 iOS point):
+   corner radius 20.25, single-line height 40.76, baseline 26.52 below the top, line pitch 20.17,
+   max width 282.57, gray #E9E8EB, blue runs from rgb(67,178,252) at the top of the map view to rgb(0,136,254) at the bottom. */
+:root{--bub-them:#E9E8EB;--txt-me:#FFFFFF;--txt-them:#000000;
+  --bfs:17px;--bls:0px;--bpt:10.36px;--bpb:10.21px;--bpl:14.8px;--bpr:14.8px;--blue-grad:linear-gradient(rgb(67.0 178.2 252.1),rgb(0.0 136.0 253.8))}
+.bubble{--c:var(--bub-them);position:relative;display:inline-block;vertical-align:top;box-sizing:border-box;
+  min-width:46px;max-width:282.57px;padding:var(--bpt) var(--bpr) var(--bpb) var(--bpl);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro",Inter,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:var(--bfs);line-height:20.17px;letter-spacing:var(--bls);font-weight:400;font-style:normal;
+  -webkit-font-smoothing:antialiased;text-align:left;overflow-wrap:break-word;white-space:pre-wrap;
+  border-radius:20.25px;background:var(--c);color:var(--txt-them);cursor:pointer;user-select:none}
+.bubble.me{--c:rgb(2 137 254);color:var(--txt-me);background-image:var(--blue-grad);background-repeat:no-repeat;
+  background-size:100% var(--gh,874px);background-position:0 var(--gy,-760px)}
+.bubble.tail::after{content:"";position:absolute;right:7.608px;bottom:-6.713px;width:15.820px;height:11.544px;
+  background:var(--c);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15.82 11.54'%3E%3Cpath d='M15.67 0.15C15.56 0.28 15.20 0.76 15.03 0.95C14.86 1.15 14.78 1.17 14.66 1.30C14.53 1.43 14.39 1.60 14.26 1.75C14.14 1.91 14.02 2.07 13.90 2.23C13.78 2.39 13.67 2.56 13.57 2.73C13.47 2.90 13.38 3.08 13.30 3.26C13.23 3.45 13.16 3.64 13.11 3.83C13.07 4.03 13.04 4.22 13.02 4.42C13.00 4.62 13.00 4.82 13.00 5.02C13.00 5.22 13.01 5.42 13.03 5.62C13.05 5.82 13.08 6.02 13.11 6.21C13.14 6.41 13.18 6.61 13.23 6.80C13.29 6.99 13.36 7.18 13.44 7.36C13.52 7.54 13.61 7.72 13.71 7.89C13.81 8.06 13.94 8.21 14.06 8.38C14.17 8.54 14.27 8.71 14.38 8.89C14.48 9.06 14.58 9.23 14.68 9.40C14.77 9.58 14.89 9.75 14.94 9.94C15.00 10.12 15.04 10.34 15.01 10.52C14.99 10.70 14.89 10.88 14.77 11.02C14.65 11.16 14.46 11.28 14.28 11.34C14.10 11.40 13.90 11.39 13.70 11.37C13.51 11.35 13.32 11.26 13.13 11.20C12.94 11.14 12.75 11.07 12.57 10.99C12.38 10.92 12.21 10.83 12.02 10.75C11.84 10.66 11.66 10.58 11.48 10.50C11.30 10.41 11.12 10.32 10.95 10.23C10.77 10.14 10.59 10.04 10.42 9.94C10.24 9.85 10.07 9.75 9.90 9.65C9.72 9.55 9.55 9.44 9.38 9.34C9.21 9.24 9.03 9.15 8.85 9.05C8.68 8.96 8.51 8.86 8.33 8.75C8.16 8.65 7.99 8.55 7.82 8.44C7.66 8.33 7.50 8.21 7.33 8.10C7.17 7.98 7.00 7.88 6.83 7.77C6.67 7.65 6.51 7.53 6.35 7.42C6.18 7.30 6.01 7.20 5.84 7.09C5.68 6.98 5.51 6.87 5.35 6.75C5.19 6.63 5.05 6.49 4.89 6.37C4.73 6.24 4.57 6.12 4.41 6.00C4.25 5.89 4.09 5.76 3.93 5.65C3.76 5.54 3.60 5.43 3.42 5.33C3.25 5.23 3.07 5.15 2.89 5.07C2.70 4.98 2.51 4.87 2.31 4.83C2.12 4.79 1.91 4.83 1.72 4.83C1.52 4.83 1.41 4.83 1.15 4.83C0.89 4.83 0.32 4.90 0.15 4.83C-0.02 4.76 0.15 4.50 0.15 4.43Z'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15.82 11.54'%3E%3Cpath d='M15.67 0.15C15.56 0.28 15.20 0.76 15.03 0.95C14.86 1.15 14.78 1.17 14.66 1.30C14.53 1.43 14.39 1.60 14.26 1.75C14.14 1.91 14.02 2.07 13.90 2.23C13.78 2.39 13.67 2.56 13.57 2.73C13.47 2.90 13.38 3.08 13.30 3.26C13.23 3.45 13.16 3.64 13.11 3.83C13.07 4.03 13.04 4.22 13.02 4.42C13.00 4.62 13.00 4.82 13.00 5.02C13.00 5.22 13.01 5.42 13.03 5.62C13.05 5.82 13.08 6.02 13.11 6.21C13.14 6.41 13.18 6.61 13.23 6.80C13.29 6.99 13.36 7.18 13.44 7.36C13.52 7.54 13.61 7.72 13.71 7.89C13.81 8.06 13.94 8.21 14.06 8.38C14.17 8.54 14.27 8.71 14.38 8.89C14.48 9.06 14.58 9.23 14.68 9.40C14.77 9.58 14.89 9.75 14.94 9.94C15.00 10.12 15.04 10.34 15.01 10.52C14.99 10.70 14.89 10.88 14.77 11.02C14.65 11.16 14.46 11.28 14.28 11.34C14.10 11.40 13.90 11.39 13.70 11.37C13.51 11.35 13.32 11.26 13.13 11.20C12.94 11.14 12.75 11.07 12.57 10.99C12.38 10.92 12.21 10.83 12.02 10.75C11.84 10.66 11.66 10.58 11.48 10.50C11.30 10.41 11.12 10.32 10.95 10.23C10.77 10.14 10.59 10.04 10.42 9.94C10.24 9.85 10.07 9.75 9.90 9.65C9.72 9.55 9.55 9.44 9.38 9.34C9.21 9.24 9.03 9.15 8.85 9.05C8.68 8.96 8.51 8.86 8.33 8.75C8.16 8.65 7.99 8.55 7.82 8.44C7.66 8.33 7.50 8.21 7.33 8.10C7.17 7.98 7.00 7.88 6.83 7.77C6.67 7.65 6.51 7.53 6.35 7.42C6.18 7.30 6.01 7.20 5.84 7.09C5.68 6.98 5.51 6.87 5.35 6.75C5.19 6.63 5.05 6.49 4.89 6.37C4.73 6.24 4.57 6.12 4.41 6.00C4.25 5.89 4.09 5.76 3.93 5.65C3.76 5.54 3.60 5.43 3.42 5.33C3.25 5.23 3.07 5.15 2.89 5.07C2.70 4.98 2.51 4.87 2.31 4.83C2.12 4.79 1.91 4.83 1.72 4.83C1.52 4.83 1.41 4.83 1.15 4.83C0.89 4.83 0.32 4.90 0.15 4.83C-0.02 4.76 0.15 4.50 0.15 4.43Z'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;pointer-events:none}
+.bubble.me.tail::after{background-image:var(--blue-grad);background-repeat:no-repeat;background-size:100% var(--gh,874px);background-position:0 var(--gy2,-790px)}
+.bubble.them.tail::after{right:auto;left:7.608px;transform:scaleX(-1)}
+/* highlights follow the whole bubble outline, tail included */
+.node.sel .bubble{filter:drop-shadow(1.5px 0 0 #111) drop-shadow(-1.5px 0 0 #111) drop-shadow(0 1.5px 0 #111) drop-shadow(0 -1.5px 0 #111)}
+.node.hl .bubble{filter:drop-shadow(0 0 3px rgba(2,138,254,.85))}
+.node.armed .bubble{filter:drop-shadow(0 0 3.5px rgba(2,138,254,.95))}
+.bubble.editing{cursor:text;user-select:text;outline:none;filter:drop-shadow(0 0 2.5px rgba(2,138,254,.95))}
+
 .more{margin-top:10px; font-size:13px; color:#8e8e93; background:transparent; border:1px dashed #c7c7cc; border-radius:10px; padding:3px 10px}
 .tb{position:absolute; top:-40px; left:50%; transform:translateX(-50%); display:flex; gap:4px; background:#fff; border:1px solid #d1d1d6; border-radius:10px; padding:3px; box-shadow:0 2px 8px rgba(0,0,0,.12); white-space:nowrap; z-index:2}
 .tb button{padding:4px 9px; font-size:13px; border:none; background:transparent}
@@ -79,7 +87,6 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 .t7 .more{border-color:rgba(255,255,255,.5)}
 .t7 .tb{background:rgba(40,30,80,.9);border-color:rgba(255,255,255,.3)}
 .t7 .tb button{color:#fff}
-.node.armed .bubble{box-shadow:0 0 0 3px rgba(2,138,254,.45)}
 .armhint{position:absolute;left:12px;bottom:12px;font-size:13px;padding:5px 10px;border-radius:999px;background:#028AFE;color:#fff;pointer-events:none}
 </style></head>
 <body class="t7"><main class="page">
@@ -97,7 +104,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
   var SLOT = 300;   // horizontal space reserved per message (matches max bubble width)
   var ROW  = 120;   // vertical distance between depth levels
   var NS   = 'http://www.w3.org/2000/svg';
-  var PAGE_KEY = 'msgflow:' + (location.pathname.split('/').pop() || 'index');
+  var PAGE_KEY = 'msgflow:' + ((location.pathname.split('/').pop() || 'index').replace(/\.html?$/, '') || 'index');
   function $(s){ return document.querySelector(s); }
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
@@ -201,6 +208,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
     if (editing === n.id){
       b.contentEditable = 'true'; b.classList.add('editing');
       b.onblur = function(){ commit(n, b); };
+      b.oninput = function(){ tint(); };
       b.onkeydown = function(e){
         if (e.key==='Enter'){ e.preventDefault(); commit(n, b); }
         else if (e.key==='Escape'){ editing = null; render(); }
@@ -231,6 +239,29 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
     $('#world').style.transform = 'translate('+panX+'px,'+panY+'px) scale('+zoom+')';
     $('#zs').value = Math.round(zoom*100);
     $('#zl').textContent = Math.round(zoom*100) + '%';
+    tint();
+  }
+  // iMessage shades blue bubbles by their height on screen: lighter near the top, deeper near the bottom.
+  // The gradient is pinned to the map view, so a bubble's shade changes as you pan, like scrolling in Messages.
+  var TAIL_BELOW = 6.713, TAIL_H = 11.544;
+  function tint(){
+    var cv = canvasEl(), cr = cv.getBoundingClientRect();
+    var top = cr.top + cv.clientTop, gh = cv.clientHeight / zoom;
+    var els = document.querySelectorAll('.bubble.me'), at = [];
+    els.forEach(function(b){ at.push([b.getBoundingClientRect().top, b.offsetHeight]); });
+    els.forEach(function(b, i){
+      var gy = (top - at[i][0]) / zoom;
+      b.style.setProperty('--gh', gh + 'px');
+      b.style.setProperty('--gy', gy + 'px');
+      b.style.setProperty('--gy2', (gy - (at[i][1] + TAIL_BELOW - TAIL_H)) + 'px');
+    });
+  }
+  var tintUntil = 0;
+  function tintFor(ms){        // keep shading in step with an animated move
+    var run = !tintUntil || tintUntil < performance.now();
+    tintUntil = Math.max(tintUntil, performance.now() + ms);
+    if (!run) return;
+    (function step(){ tint(); if (performance.now() < tintUntil) requestAnimationFrame(step); else tintUntil = 0; })();
   }
   function render(){
     var L = layout();
@@ -285,7 +316,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
   function centerOn(id){
     var p = layout().pos[id], c = canvasEl();
     panX = c.clientWidth/2 - p.x*zoom;
-    panY = c.clientHeight/2 - (p.y + 21)*zoom;   // 21 = half a bubble
+    panY = c.clientHeight/2 - (p.y + 20.4)*zoom;   // 20.4 = half a one-line bubble
     applyView();
   }
 
@@ -313,6 +344,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
         if (el) el.classList.add('hl');
         $('#world').classList.add('anim');
         centerOn(n.id);
+        tintFor(900);
       }, i*1000));
     });
     playTimers.push(setTimeout(stopPlay, path.length*1000 + 1200));
@@ -391,7 +423,64 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
   $('#zout').onclick = function(){ var c = viewCenter(); setZoomAt(zoom/1.2, c.x, c.y); };
   $('#zs').oninput   = function(){ var c = viewCenter(); setZoomAt(+this.value/100, c.x, c.y); };
 
+
+  // ---- bubble text calibration: makes whatever font is available match iOS's SF Pro text
+  // (size, letter spacing, side inset, baseline). Targets were measured from the iPhone screenshots, in points.
+  var CAL = {xh: 9.04, cap: 12.04, base: 26.52, h1: 40.76, lh: 20.17,
+    widths: [['tomatoes, pineapple, seltzer, and', 251.34], ['Oh! Jay I left a sweater in your', 229.78],
+             ['car last week, can you bring that,', 249.48], ['We need: tortilla chips,', 171.86],
+             ['the biggest piñata we can find', 228.16]],
+    insets: [['O', 15.11], ['c', 14.92], ['t', 14.57], ['W', 14.97]],
+    sides: 29.6};   // left + right padding, so lines wrap at the same width as iOS
+  function calibrate(){
+    var root = document.documentElement.style;
+    var probe = document.createElement('div');
+    probe.className = 'bubble them';
+    probe.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;padding-top:0';
+    probe.innerHTML = 'Hg<span style="display:inline-block;width:0;height:0;vertical-align:baseline"></span>';
+    document.body.appendChild(probe);
+    var fam = getComputedStyle(probe).fontFamily;
+    var ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = '400 1000px ' + fam;      // large size so glyph bounds are not rounded
+    var xh = ctx.measureText('x').actualBoundingBoxAscent / 1000, cap = ctx.measureText('H').actualBoundingBoxAscent / 1000;
+    var fs = (xh > 0 && cap > 0) ? 17 * Math.sqrt((CAL.xh / (17 * xh)) * (CAL.cap / (17 * cap))) : 17;
+    if (Math.abs(fs - 17) < 0.25) fs = 17;      // the real SF Pro: keep iOS's 17 pt
+    fs = Math.max(14, Math.min(20, fs));
+    // measure at 1000px and scale down: canvas rounds glyph bounds at small sizes
+    var k = fs / 1000, ls = 0, pad = 0;
+    CAL.widths.forEach(function(w){
+      var m = ctx.measureText(w[0]);
+      ls += (w[1] - (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * k) / (w[0].length - 1);
+    });
+    ls /= CAL.widths.length;
+    CAL.insets.forEach(function(c){ pad += c[1] + ctx.measureText(c[0]).actualBoundingBoxLeft * k; });
+    pad /= CAL.insets.length;
+    root.setProperty('--bfs', fs.toFixed(3) + 'px');
+    root.setProperty('--bls', ls.toFixed(4) + 'px');
+    root.setProperty('--bpl', pad.toFixed(3) + 'px');
+    root.setProperty('--bpr', (CAL.sides - pad).toFixed(3) + 'px');
+    var base = probe.lastChild.getBoundingClientRect().top - probe.getBoundingClientRect().top;
+    var pt = CAL.base - base;
+    root.setProperty('--bpt', pt.toFixed(3) + 'px');
+    root.setProperty('--bpb', (CAL.h1 - pt - CAL.lh).toFixed(3) + 'px');
+    probe.remove();
+    return {font: fam, size: fs, spacing: ls, inset: pad, top: pt};
+  }
+
+  window.addEventListener('resize', tint);
+  calibrate();
   render();
   fit();
+  // When the bubble font finishes loading, measure it again and redraw so the text sits where iOS puts it.
+  var recal = null;
+  function recalibrate(){
+    clearTimeout(recal);
+    recal = setTimeout(function(){ calibrate(); if (editing) tint(); else render(); }, 30);
+  }
+  if (document.fonts){
+    if (document.fonts.load) document.fonts.load('400 17px Inter').then(recalibrate, recalibrate);
+    if (document.fonts.ready) document.fonts.ready.then(recalibrate);
+    if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', recalibrate);
+  }
 })();
 </script></body></html>
