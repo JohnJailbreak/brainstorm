@@ -1,0 +1,397 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brainstorm</title>
+<style>
+/* Bubble geometry measured from the iPhone screenshot:
+   one line = 22 px text + 10 px top/bottom padding (42 px body), corner radius 16 px,
+   text inset 16 px. Colors: blue #028AFE, gray #E9E9E9, black text, white on blue. */
+:root{
+  --bub-me:#028AFE; --bub-them:#E9E9E9; --txt-me:#FFFFFF; --txt-them:#000000;
+  --tailR:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='21'%3E%3Cpath d='M0 0C0 12 5 18 20 21H0Z'/%3E%3C/svg%3E");
+  --tailL:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='21'%3E%3Cpath d='M20 0C20 12 15 18 0 21H20Z'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:24px 28px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;background:#fff;color:#111}
+h1{font-size:22px;margin:0 0 12px}
+button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1px solid #d1d1d6;background:#f5f5f7;color:#111;cursor:pointer}
+.ctl-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.actions{display:flex;flex-wrap:wrap;gap:6px}
+.zoombar{display:flex;gap:6px;align-items:center;font-size:14px}
+.zoombar input[type=range]{width:150px}
+#zl{min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.hint{font-size:13px;color:#8e8e93;margin:10px 0 0}
+
+/* map canvas: pannable and zoomable 2D surface */
+#canvas{position:relative;height:calc(100vh - 210px);min-height:460px;overflow:hidden;border-radius:12px;cursor:grab;touch-action:none;background:#fafafa;border:1px solid #e5e5ea}
+#canvas.grabbing{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#world.anim{transition:transform .8s ease}
+.links{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.links path{fill:none;stroke:rgba(128,128,128,.55);stroke-width:1.5}
+
+/* message nodes */
+.node{position:absolute;width:300px;display:flex;flex-direction:column;align-items:center}
+.node.hl .bubble{box-shadow:0 0 0 3px rgba(2,138,254,.35)}
+.node.sel .bubble{box-shadow:0 0 0 2px #111}
+.bubble{--c:var(--bub-them); position:relative; display:inline-block; max-width:300px; padding:10px 16px;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  font-size:17px; line-height:22px; letter-spacing:-.2px; text-align:left;
+  border-radius:16px; background:var(--c); color:var(--txt-them); overflow-wrap:break-word; white-space:pre-wrap; cursor:pointer; user-select:none}
+.bubble.me{--c:var(--bub-me); color:var(--txt-me)}
+.bubble.them{--c:var(--bub-them); color:var(--txt-them)}
+.bubble.editing{cursor:text;user-select:text;outline:none;box-shadow:0 0 0 2px rgba(2,138,254,.5)}
+.bubble.tail::after{content:""; position:absolute; bottom:0; width:10px; height:11px; background:var(--c);
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-size:100% 100%; mask-size:100% 100%}
+.bubble.me.tail::after{right:-5px; -webkit-mask-image:var(--tailR); mask-image:var(--tailR)}
+.bubble.them.tail::after{left:-5px; -webkit-mask-image:var(--tailL); mask-image:var(--tailL)}
+.more{margin-top:10px; font-size:13px; color:#8e8e93; background:transparent; border:1px dashed #c7c7cc; border-radius:10px; padding:3px 10px}
+.tb{position:absolute; top:-40px; left:50%; transform:translateX(-50%); display:flex; gap:4px; background:#fff; border:1px solid #d1d1d6; border-radius:10px; padding:3px; box-shadow:0 2px 8px rgba(0,0,0,.12); white-space:nowrap; z-index:2}
+.tb button{padding:4px 9px; font-size:13px; border:none; background:transparent}
+.tb button:hover{background:#f0f0f5}
+/* Themes change only the page around the map. Bubble colors and geometry stay identical. */
+.t0{}
+.t1{background:#fff}
+.t2{background:#000;color:#fff}
+.t2 button{background:#1c1c1e;color:#fff;border-color:#3a3a3c}
+.t2 #canvas{background:#0b0b0d;border-color:#2c2c2e}
+.t2 .hint,.t2 .more{color:#98989d}
+.t2 .tb{background:#1c1c1e;border-color:#3a3a3c}
+.t2 .tb button{color:#fff}
+.t3{background:#e5e5ea}
+.t3 .page{max-width:390px;margin:0 auto;background:#fff;border-radius:44px;padding:36px 14px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.t3 #canvas{height:520px;min-height:0}
+.t3 .actions,.t3 .zoombar{font-size:12px}
+.t4{background:#f5f5f7}
+.t4 #canvas{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.t5{background:#0d1117;color:#7ee787;font-family:ui-monospace,Menlo,monospace}
+.t5 button{background:#161b22;color:#7ee787;border-color:#30363d;font-family:inherit}
+.t5 #canvas{background:#0d1117;border-color:#30363d}
+.t5 .hint,.t5 .more{color:#7ee787}
+.t5 .tb{background:#161b22;border-color:#30363d}
+.t5 .tb button{color:#7ee787}
+.t6{background:#f4ecd8;font-family:Georgia,serif}
+.t6 button{background:#efe4c8;color:#3b2a16;border-color:#c9b68c;font-family:Georgia,serif}
+.t6 #canvas{background:#f9f3e3;border-color:#c9b68c}
+.t6 .tb{background:#efe4c8;border-color:#c9b68c}
+.t7{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;min-height:100vh}
+.t7 #canvas{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.t7 button{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.4)}
+.t7 .hint,.t7 .more{color:#e0e0ff}
+.t7 .more{border-color:rgba(255,255,255,.5)}
+.t7 .tb{background:rgba(40,30,80,.9);border-color:rgba(255,255,255,.3)}
+.t7 .tb button{color:#fff}
+.node.armed .bubble{box-shadow:0 0 0 3px rgba(2,138,254,.45)}
+.armhint{position:absolute;left:12px;bottom:12px;font-size:13px;padding:5px 10px;border-radius:999px;background:#028AFE;color:#fff;pointer-events:none}
+</style></head>
+<body class="t7"><main class="page">
+<h1>Brainstorm</h1>
+<div class="ctl-row"><div class="actions">
+<button id="play">Play a path</button><button id="fit">Fit</button><button id="center">Center selected</button><button id="expand">Expand all</button><button id="collapse">Collapse all</button><button id="reset">Reset map</button>
+</div><div class="zoombar"><button id="zout">−</button><input id="zs" type="range" min="40" max="200" value="100"><button id="zin">+</button><span id="zl">100%</span></div></div>
+<div id="canvas"><div id="world"></div></div>
+<p class="hint">Double-click a bubble to edit it. Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it. Press Reply to add manually, Delete to remove. Drag empty space to pan. Scroll to pan, Ctrl + scroll to zoom.</p>
+</main>
+<script>window.PAGE_SEED="Can you send me the photos?";</script>
+<script>
+(function(){
+  // ---- constants ----
+  var SLOT = 300;   // horizontal space reserved per message (matches max bubble width)
+  var ROW  = 120;   // vertical distance between depth levels
+  var NS   = 'http://www.w3.org/2000/svg';
+  var PAGE_KEY = 'msgflow:' + (location.pathname.split('/').pop() || 'index');
+  function $(s){ return document.querySelector(s); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  // ---- data: every message is written by the user ----
+  var nid = 1, selected = null, editing = null, zoom = 1, panX = 0, panY = 0;
+  var drag = null, playTimers = [];
+  var armed = null, armTimer = null, DWELL = 700;   // hover target and dwell time (ms)
+  function mk(text, from){ return {id:'n'+(nid++), text:text, from:from, children:[], collapsed:false}; }
+  function opp(f){ return f==='me' ? 'them' : 'me'; }
+  function bumpIds(n){ var m = parseInt(n.id.slice(1),10); if (m >= nid) nid = m+1; n.children.forEach(bumpIds); }
+  function starter(){
+    // A single editable starting point. Edit it, delete it, or replace it.
+    var r = mk(window.PAGE_SEED || 'Message you are planning to send', 'me');
+    return r;
+  }
+  var state = null;
+  try { var saved = JSON.parse(localStorage.getItem(PAGE_KEY)); if (saved && saved.root){ bumpIds(saved.root); state = saved; } } catch(e){}
+  if (!state) state = {root: starter()};
+  function save(){ try { localStorage.setItem(PAGE_KEY, JSON.stringify(state)); } catch(e){} }
+
+  function find(id, n, parent){
+    n = n || state.root;
+    if (n.id === id) return {node:n, parent:parent||null};
+    for (var i=0;i<n.children.length;i++){ var r = find(id, n.children[i], n); if (r) return r; }
+    return null;
+  }
+
+  // ---- layout: tidy tree; widths from visible subtrees, rows by depth ----
+  function measure(n){
+    if (n.collapsed || !n.children.length) return SLOT;
+    var s = 0; n.children.forEach(function(c){ s += measure(c); });
+    return Math.max(SLOT, s);
+  }
+  function layout(){
+    var pos = {}, maxD = 0;
+    function place(n, left, d){
+      var w = measure(n);
+      pos[n.id] = {x: left + w/2, y: d*ROW};
+      if (d > maxD) maxD = d;
+      if (!n.collapsed){
+        var cur = left;
+        n.children.forEach(function(c){ var cw = measure(c); place(c, cur, d+1); cur += cw; });
+      }
+      return w;
+    }
+    var W = measure(state.root);
+    place(state.root, 0, 0);
+    return {pos:pos, W:W, H:(maxD+1)*ROW + 80};
+  }
+
+  // ---- editing actions ----
+  function focusEdit(id, caretAtEnd){
+    var el = document.querySelector('.node[data-id="'+id+'"] .bubble');
+    if (!el) return;
+    el.focus();
+    var r = document.createRange(); r.selectNodeContents(el);
+    if (caretAtEnd) r.collapse(false);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  function startEdit(id){ editing = id; selected = id; render(); focusEdit(id); }
+  function commit(n, b){
+    if (editing !== n.id) return;           // guards against double commit (Enter then blur)
+    var v = b.textContent.trim();
+    if (v) n.text = v;
+    editing = null; save(); render();
+  }
+  function reply(n, typed){
+    var c = mk(typed || 'New message', opp(n.from));
+    n.children.push(c); n.collapsed = false;
+    selected = c.id; editing = c.id; save(); render(); focusEdit(c.id, !!typed);
+  }
+  function remove(n){
+    var f = find(n.id); if (!f || !f.parent) return;   // the starting message is not deletable
+    var i = f.parent.children.indexOf(n);
+    f.parent.children.splice(i, 1);
+    selected = f.parent.id; editing = null; save(); render();
+  }
+
+  // ---- DOM rendering ----
+  function toolbar(n){
+    var t = document.createElement('div'); t.className = 'tb';
+    function btn(label, fn){
+      var b = document.createElement('button'); b.textContent = label;
+      b.onclick = function(e){ e.stopPropagation(); fn(); }; t.appendChild(b);
+    }
+    btn('Reply', function(){ reply(n); });
+    btn('Edit', function(){ startEdit(n.id); });
+    if (n.children.length) btn(n.collapsed ? 'Unfold' : 'Fold', function(){ n.collapsed = !n.collapsed; save(); render(); });
+    if (n !== state.root) btn('Delete', function(){ remove(n); });
+    return t;
+  }
+  function nodeEl(n, p){
+    var el = document.createElement('div');
+    el.className = 'node' + (selected===n.id ? ' sel' : '');
+    el.dataset.id = n.id;
+    el.style.left = (p.x - SLOT/2) + 'px';
+    el.style.top  = p.y + 'px';
+    var b = document.createElement('div');
+    b.className = 'bubble tail ' + (n.from==='me' ? 'me' : 'them');
+    b.textContent = n.text;
+    if (editing === n.id){
+      b.contentEditable = 'true'; b.classList.add('editing');
+      b.onblur = function(){ commit(n, b); };
+      b.onkeydown = function(e){
+        if (e.key==='Enter'){ e.preventDefault(); commit(n, b); }
+        else if (e.key==='Escape'){ editing = null; render(); }
+      };
+    } else {
+      b.onclick = function(e){ e.stopPropagation(); if (selected!==n.id){ selected = n.id; render(); } };
+      b.ondblclick = function(e){ e.stopPropagation(); startEdit(n.id); };
+    }
+    b.onmouseenter = function(){
+      clearTimeout(armTimer);
+      armTimer = setTimeout(function(){ if (editing) return; armed = n.id; showArm(); }, DWELL);
+    };
+    b.onmouseleave = function(){
+      clearTimeout(armTimer);
+      if (armed === n.id){ armed = null; showArm(); }
+    };
+    el.appendChild(b);
+    if (selected === n.id && editing !== n.id) el.appendChild(toolbar(n));
+    if (n.children.length && n.collapsed){
+      var m = document.createElement('button'); m.className = 'more';
+      m.textContent = '+' + n.children.length + ' replies';
+      m.onclick = function(e){ e.stopPropagation(); n.collapsed = false; save(); render(); };
+      el.appendChild(m);
+    }
+    return el;
+  }
+  function applyView(){
+    $('#world').style.transform = 'translate('+panX+'px,'+panY+'px) scale('+zoom+')';
+    $('#zs').value = Math.round(zoom*100);
+    $('#zl').textContent = Math.round(zoom*100) + '%';
+  }
+  function render(){
+    var L = layout();
+    var w = $('#world'); w.innerHTML = '';
+    w.style.width = L.W + 'px'; w.style.height = L.H + 'px';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'links'); svg.setAttribute('width', L.W); svg.setAttribute('height', L.H);
+    w.appendChild(svg);
+    var pairs = [];
+    (function walk(n){
+      w.appendChild(nodeEl(n, L.pos[n.id]));
+      if (!n.collapsed) n.children.forEach(function(c){ pairs.push([n, c]); walk(c); });
+    })(state.root);
+    pairs.forEach(function(pr){
+      var pp = L.pos[pr[0].id], cp = L.pos[pr[1].id];
+      var bh = w.querySelector('.node[data-id="'+pr[0].id+'"] .bubble').offsetHeight;
+      var y1 = pp.y + bh, y2 = cp.y, my = (y1+y2)/2;
+      var path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', 'M'+pp.x+' '+y1+' C'+pp.x+' '+my+' '+cp.x+' '+my+' '+cp.x+' '+y2);
+      svg.appendChild(path);
+    });
+    applyView();
+    showArm();
+  }
+  function showArm(){
+    document.querySelectorAll('.node.armed').forEach(function(e){ e.classList.remove('armed'); });
+    var h = document.getElementById('armhint'); if (h) h.remove();
+    if (!armed) return;
+    var el = document.querySelector('.node[data-id="'+armed+'"]');
+    if (el) el.classList.add('armed');
+    h = document.createElement('div'); h.id = 'armhint'; h.className = 'armhint';
+    h.textContent = 'Type to reply';
+    canvasEl().appendChild(h);
+  }
+  function select(id){ selected = id; render(); }
+
+  // ---- view: pan and zoom ----
+  function canvasEl(){ return $('#canvas'); }
+  function setZoomAt(z, cx, cy){
+    var nz = clamp(z, 0.4, 2);
+    var wx = (cx - panX)/zoom, wy = (cy - panY)/zoom;
+    zoom = nz; panX = cx - wx*zoom; panY = cy - wy*zoom;
+    applyView();
+  }
+  function viewCenter(){ var c = canvasEl(); return {x:c.clientWidth/2, y:c.clientHeight/2}; }
+  function fit(){
+    var L = layout(), c = canvasEl();
+    zoom = clamp(Math.min((c.clientWidth-60)/L.W, (c.clientHeight-60)/L.H, 1.2), 0.4, 2);
+    panX = (c.clientWidth - L.W*zoom)/2; panY = 30;
+    applyView();
+  }
+  function centerOn(id){
+    var p = layout().pos[id], c = canvasEl();
+    panX = c.clientWidth/2 - p.x*zoom;
+    panY = c.clientHeight/2 - (p.y + 21)*zoom;   // 21 = half a bubble
+    applyView();
+  }
+
+  // ---- playback: walks a random path through the user's own messages ----
+  function randomPath(){
+    var path = [state.root], n = state.root;
+    while (!n.collapsed && n.children.length){
+      n = n.children[Math.floor(Math.random()*n.children.length)];
+      path.push(n);
+    }
+    return path;
+  }
+  function stopPlay(){
+    playTimers.forEach(clearTimeout); playTimers = [];
+    document.querySelectorAll('.node.hl').forEach(function(e){ e.classList.remove('hl'); });
+    $('#world').classList.remove('anim');
+  }
+  function playRandom(){
+    stopPlay();
+    var path = randomPath();
+    path.forEach(function(n, i){
+      playTimers.push(setTimeout(function(){
+        document.querySelectorAll('.node.hl').forEach(function(e){ e.classList.remove('hl'); });
+        var el = document.querySelector('.node[data-id="'+n.id+'"]');
+        if (el) el.classList.add('hl');
+        $('#world').classList.add('anim');
+        centerOn(n.id);
+      }, i*1000));
+    });
+    playTimers.push(setTimeout(stopPlay, path.length*1000 + 1200));
+  }
+
+  // ---- pointer: drag empty space to pan, click empty space to deselect ----
+  var canvas = canvasEl();
+  canvas.addEventListener('pointerdown', function(e){
+    if (e.target.closest('.node,.tb,button,input')) return;
+    stopPlay();
+    drag = {x:e.clientX, y:e.clientY, px:panX, py:panY, moved:0};
+    canvas.setPointerCapture(e.pointerId);
+    canvas.classList.add('grabbing');
+  });
+  canvas.addEventListener('pointermove', function(e){
+    if (!drag) return;
+    panX = drag.px + (e.clientX - drag.x);
+    panY = drag.py + (e.clientY - drag.y);
+    drag.moved = Math.abs(e.clientX-drag.x) + Math.abs(e.clientY-drag.y);
+    applyView();
+  });
+  function endDrag(){
+    if (!drag) return;
+    var wasClick = drag.moved < 4;
+    drag = null; canvas.classList.remove('grabbing');
+    if (wasClick && (selected || editing)){ editing = null; selected = null; render(); }
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  // Ctrl/Cmd + scroll (or trackpad pinch) zooms at the pointer; plain scroll pans like a map.
+  canvas.addEventListener('wheel', function(e){
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey){
+      var r = canvas.getBoundingClientRect();
+      setZoomAt(zoom * Math.exp(-e.deltaY*0.01), e.clientX - r.left, e.clientY - r.top);
+    } else {
+      panX -= e.deltaX; panY -= e.deltaY; applyView();
+    }
+  }, {passive:false});
+
+  // ---- keyboard ----
+  document.addEventListener('keydown', function(e){
+    if (editing || (!selected && !armed) || e.target.closest('input,textarea,[contenteditable="true"]')) return;
+    if (e.key==='Delete' || e.key==='Backspace'){
+      var f = find(selected); if (f && f.parent){ e.preventDefault(); remove(f.node); }
+    } else if (e.key==='Enter' && selected){ startEdit(selected); }
+    else if (e.key==='Escape'){ selected = null; render(); }
+    else if (e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+      // Type-to-reply: the first typed character starts a reply under the selected bubble.
+      // Focus stays in that reply, so the remaining keystrokes finish it.
+      // A hovered (armed) bubble takes priority over the selected one.
+      var target = armed || selected;
+      var sel = find(target); if (!sel) return;
+      e.preventDefault(); armed = null; reply(sel.node, e.key);
+    }
+  });
+
+  // ---- buttons ----
+  $('#play').onclick = playRandom;
+  $('#fit').onclick = fit;
+  $('#center').onclick = function(){ if (selected) centerOn(selected); else fit(); };
+  $('#expand').onclick = function(){
+    (function walk(n){ n.collapsed = false; n.children.forEach(walk); })(state.root);
+    save(); render();
+  };
+  $('#collapse').onclick = function(){
+    (function walk(n){ if (n!==state.root && n.children.length) n.collapsed = true; n.children.forEach(walk); })(state.root);
+    save(); render();
+  };
+  $('#reset').onclick = function(){
+    if (!confirm('Clear this map and start over with one message?')) return;
+    state = {root: starter()}; selected = null; editing = null;
+    save(); render(); fit();
+  };
+  $('#zin').onclick  = function(){ var c = viewCenter(); setZoomAt(zoom*1.2, c.x, c.y); };
+  $('#zout').onclick = function(){ var c = viewCenter(); setZoomAt(zoom/1.2, c.x, c.y); };
+  $('#zs').oninput   = function(){ var c = viewCenter(); setZoomAt(+this.value/100, c.x, c.y); };
+
+  render();
+  fit();
+})();
+</script></body></html>
