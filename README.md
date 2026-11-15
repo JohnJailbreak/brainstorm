@@ -5,6 +5,7 @@ Brainstorm is a message-mapping tool. Write the message you plan to send, then b
 - Double-click a bubble to edit it.
 - Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it.
 - Drag empty space to pan. Ctrl/Cmd + scroll to zoom.
+- Replies are linked by three white neon dots that travel from message to reply.
 - Your map is saved in your browser.
 
 ## Bubbles
