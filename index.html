@@ -24,7 +24,6 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 #world{position:absolute;left:0;top:0;transform-origin:0 0}
 #world.anim{transition:transform .8s ease}
 .links{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
-.links path{fill:none;stroke:none}
 
 /* message nodes */
 .node{position:absolute;width:300px;display:flex;flex-direction:column;align-items:center}
@@ -87,17 +86,1175 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 .t7 .more{border-color:rgba(255,255,255,.5)}
 .t7 .tb{background:rgba(40,30,80,.9);border-color:rgba(255,255,255,.3)}
 .t7 .tb button{color:#fff}
+/* ---- reply lines: how each reply connects to the message above it (see ReplyLines below) ---- */
+#world{z-index:1}
+.armhint{z-index:3}
+.bubble{transform-origin:50% 0}
+.link-layer{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+:root{--line:#8E8E93}
+.t2,.t5,.t7{--line:#FFFFFF}
+.rl-ln{stroke:var(--line)}
+.rl-lf{fill:var(--line)}
+.rl-ink{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.rl-ink-under{z-index:0}
+.rl-ink-over{z-index:2}
+/* Reply count: a glass capsule wherever a message branches */
+.rl-count{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 10px;border:1px solid rgba(0,0,0,.12);border-radius:11px;background:rgba(255,255,255,.75);color:#111;font:600 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",sans-serif;letter-spacing:-.01em;white-space:nowrap;cursor:pointer;pointer-events:auto;-webkit-backdrop-filter:blur(10px) saturate(1.6);backdrop-filter:blur(10px) saturate(1.6);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.t7 .rl-count{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 10px rgba(40,20,100,.18)}
+.rl-roll{display:block;flex:none;height:15px;overflow:hidden}
+.rl-track{display:flex;flex-direction:column;align-items:flex-start}
+.rl-track span{display:block;height:15px;line-height:15px}
+.rl-count svg{flex:none;width:8px;height:5px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+[data-reply-lines="count"] .more{height:22px;margin-top:12px;padding:0 10px;border:1px solid rgba(0,0,0,.12);border-radius:11px;background:rgba(255,255,255,.75);color:#111;font-size:12px;font-weight:600;-webkit-backdrop-filter:blur(10px) saturate(1.6);backdrop-filter:blur(10px) saturate(1.6)}
+[data-reply-lines="count"].t7 .more{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 10px rgba(40,20,100,.18)}
+/* Typing: the indicator that grows into the reply */
+.rl-typing{position:absolute;opacity:0;background:var(--c);transform-origin:14% 100%;pointer-events:none}
+.rl-typing.me{transform-origin:86% 100%}
+.rl-dots{position:absolute;left:50%;top:50%;display:flex;gap:4.5px;transform:translate(-50%,-50%)}
+.rl-dots i{display:block;width:8.5px;height:8.5px;border-radius:50%;background:#7C7C80}
+.rl-typing.me .rl-dots i{background:#fff}
+.rl-typing b{position:absolute;border-radius:50%;background:var(--c)}
+.rl-t1{width:11px;height:11px;bottom:-3px}
+.rl-t2{width:5.5px;height:5.5px;bottom:-8.5px}
+.rl-typing.them .rl-t1{left:1px}.rl-typing.them .rl-t2{left:-4px}
+.rl-typing.me .rl-t1{right:1px}.rl-typing.me .rl-t2{right:-4px}
+/* Magic Move: the copy that travels */
+.rl-mm{position:absolute;overflow:hidden;white-space:pre-wrap;overflow-wrap:break-word;border-radius:20.25px;padding:var(--bpt) var(--bpr) var(--bpb) var(--bpl);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro",Inter,"Segoe UI",Roboto,sans-serif;font-size:var(--bfs);line-height:20.17px;letter-spacing:var(--bls);-webkit-font-smoothing:antialiased;pointer-events:none}
+/* Intelligence: the halo around a reply as it lands */
+.rl-halo{position:absolute;opacity:0;overflow:hidden;border-radius:26px;filter:blur(8px);pointer-events:none}
+.rl-spin{position:absolute;left:50%;top:50%;width:640px;height:640px;margin:-320px 0 0 -320px;background:conic-gradient(#FF9F45,#FF5FA2,#B46BFF,#4E9BFF,#33D6FF,#FF9F45)}
+/* Settings */
+.rl-panel{position:fixed;z-index:30;width:min(360px,calc(100vw - 24px));max-height:calc(100vh - 150px);overflow:auto;padding:12px 10px 10px;border:1px solid #d1d1d6;border-radius:16px;background:#fff;color:#111;box-shadow:0 14px 44px rgba(0,0,0,.2)}
+.rl-panel[hidden]{display:none}
+.t2 .rl-panel,.t5 .rl-panel{background:#1c1c1e;color:#fff;border-color:#3a3a3c}
+.t7 .rl-panel{background:rgba(44,32,92,.94);color:#fff;border-color:rgba(255,255,255,.3);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4)}
+.rl-head{display:flex;align-items:center;gap:6px;padding:0 4px}
+.rl-head h2{flex:1;margin:0;font-size:15px;font-weight:600}
+.rl-head button{padding:4px 10px;font-size:13px}
+.rl-note{margin:6px 4px 0;font-size:12.5px;line-height:1.4;opacity:.75}
+.rl-panel fieldset{margin:12px 0 0;padding:0;border:0}
+.rl-panel legend{margin:0 0 4px;padding:0 4px;font-size:12px;font-weight:600;opacity:.65}
+.rl-opt{display:grid;grid-template-columns:18px minmax(0,1fr);gap:1px 8px;padding:7px 6px;border-radius:10px;cursor:pointer}
+.rl-opt:hover{background:rgba(0,0,0,.04)}
+.t2 .rl-opt:hover,.t5 .rl-opt:hover,.t7 .rl-opt:hover{background:rgba(255,255,255,.08)}
+.rl-opt:has(input:checked){background:rgba(2,138,254,.1)}
+.t2 .rl-opt:has(input:checked),.t5 .rl-opt:has(input:checked),.t7 .rl-opt:has(input:checked){background:rgba(255,255,255,.16)}
+.rl-opt input{grid-row:span 2;margin:2px 0 0;accent-color:#028AFE}
+.rl-name{font-size:14px;font-weight:600}
+.rl-desc{font-size:12.5px;line-height:1.38;opacity:.75}
+.rl-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(2,138,254,.14);color:#0068d6;font-size:11px;font-weight:600;vertical-align:1px}
+.t2 .rl-tag,.t5 .rl-tag,.t7 .rl-tag{background:rgba(255,255,255,.2);color:#fff}
 .armhint{position:absolute;left:12px;bottom:12px;font-size:13px;padding:5px 10px;border-radius:999px;background:#028AFE;color:#fff;pointer-events:none}
 </style></head>
 <body class="t7"><main class="page">
 <h1>Brainstorm</h1>
 <div class="ctl-row"><div class="actions">
-<button id="play">Play a path</button><button id="fit">Fit</button><button id="center">Center selected</button><button id="expand">Expand all</button><button id="collapse">Collapse all</button><button id="reset">Reset map</button>
+<button id="play">Play a path</button><button id="fit">Fit</button><button id="center">Center selected</button><button id="expand">Expand all</button><button id="collapse">Collapse all</button><button id="reset">Reset map</button><button id="settings">Settings</button>
 </div><div class="zoombar"><button id="zout">−</button><input id="zs" type="range" min="40" max="200" value="100"><button id="zin">+</button><span id="zl">100%</span></div></div>
 <div id="canvas"><div id="world"></div></div>
 <p class="hint">Double-click a bubble to edit it. Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it. Press Reply to add manually, Delete to remove. Drag empty space to pan. Scroll to pan, Ctrl + scroll to zoom.</p>
 </main>
 <script>window.PAGE_SEED="Can you send me the photos?";</script>
+<script>
+/* ======================================================================
+   Reply lines: how each reply connects to the message above it.
+   Fifteen styles, chosen in Settings and saved in this browser. Intelligence is the default.
+   render() calls draw() after it lays out the map. A line that was already on the map is drawn
+   settled. Only a line that just appeared plays its entrance, so editing never replays the map.
+   No style ranks a reply above its siblings: every line looks the same at rest, and Play a path
+   lights its path only while it plays.
+   ====================================================================== */
+window.ReplyLines = (() => {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const KEY = 'brainstorm:settings';
+  const DEFAULT = 'intelligence';
+  const SETTLED = -1e6;                       // "born" time of a line that needs no entrance
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ---------- math ---------- */
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const prog = (t, t0, d) => clamp01((t - t0) / d);
+  const easeOut = p => 1 - Math.pow(1 - p, 3);
+  const easeInOut = p => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  const minJerk = p => p * p * p * (10 - 15 * p + 6 * p * p);   // the speed profile of a hand writing
+  // SwiftUI-style spring: response is the duration, damping is 1 - bounce (.smooth 1, .snappy ~.85, .bouncy ~.7)
+  function spring(t, response, damping) {
+    if (t <= 0) return 0;
+    if (t > 30) return 1;
+    const w = 2 * Math.PI / response;
+    if (damping >= 1) return 1 - Math.exp(-w * t) * (1 + w * t);
+    const wd = w * Math.sqrt(1 - damping * damping);
+    return 1 - Math.exp(-damping * w * t) * (Math.cos(wd * t) + (damping * w / wd) * Math.sin(wd * t));
+  }
+  // a kick that rings down to zero
+  function wobble(t, amp, period, damping) {
+    if (t <= 0 || t > 30) return 0;
+    const w = 2 * Math.PI / period;
+    return amp * Math.exp(-damping * w * t) * Math.sin(w * Math.sqrt(1 - damping * damping) * t);
+  }
+  // a value that springs to each new target in turn: keys = [[time, value], ...] in time order
+  function keyed(t, keys, sp) {
+    let v = keys[0][1];
+    for (let i = 1; i < keys.length; i++) {
+      if (t <= keys[i][0]) break;
+      v += (keys[i][1] - keys[i - 1][1]) * spring(t - keys[i][0], sp[0], sp[1]);
+    }
+    return v;
+  }
+  function rng(seed) {
+    let a = seed >>> 0;
+    return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  const f = v => String(Math.round(v * 100) / 100);
+  const f4 = v => String(Math.round(v * 1e4) / 1e4);
+  const nowS = () => performance.now() / 1000;
+  let uidN = 0;
+  const uid = p => 'rl-' + p + (++uidN);
+
+  /* ---------- DOM ---------- */
+  function svgEl(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function htmlEl(tag, cls, parent) { const e = document.createElement(tag); if (cls) e.className = cls; if (parent) parent.appendChild(e); return e; }
+  // write only when a value changes, so a still map costs nothing
+  function css(el, k, v) { const c = el.__rc || (el.__rc = {}); if (c[k] !== v) { c[k] = v; el.style.setProperty(k, v); } }
+  function attr(el, k, v) { const c = el.__ra || (el.__ra = {}); if (c[k] !== v) { c[k] = v; el.setAttribute(k, v); } }
+  // reveal a stroke drawn with pathLength="1"
+  function drawP(path, p) {
+    if (p <= 0.001) { attr(path, 'visibility', 'hidden'); return; }
+    attr(path, 'visibility', 'visible');
+    attr(path, 'stroke-dasharray', p >= 0.9995 ? 'none' : `${f4(p)} 2`);
+  }
+  // a blur sized to one line; a vertical line has no width, so the region is given in map units
+  function blurFilter(defs, b, sd) {
+    const id = uid('bl');
+    const fl = svgEl('filter', { id, filterUnits: 'userSpaceOnUse', x: f(b.x), y: f(b.y), width: f(b.w), height: f(b.h) }, defs);
+    svgEl('feGaussianBlur', { stdDeviation: String(sd) }, fl);
+    return id;
+  }
+
+  /* ---------- color: Messages shades blue by height on screen, lighter at the top ---------- */
+  const BLUE_TOP = [67, 178.2, 252.1], BLUE_BOT = [0, 136, 253.8], GRAY = [233, 232, 235];
+  const TEXT = { me: [255, 255, 255], them: [0, 0, 0] };
+  const mixc = (a, b, p) => a.map((v, i) => v + (b[i] - v) * p);
+  const rgb = a => `rgb(${a.map(v => Math.round(v)).join(',')})`;
+
+  /* ---------- geometry ---------- */
+  function Cubic(p0, p1, p2, p3) {
+    this.p = [p0, p1, p2, p3];
+    const N = 48; this.N = N; this.lut = new Float32Array(N + 1);
+    let len = 0, prev = this.pt(0);
+    for (let i = 1; i <= N; i++) { const q = this.pt(i / N); len += Math.hypot(q.x - prev.x, q.y - prev.y); this.lut[i] = len; prev = q; }
+    this.len = len;
+  }
+  Cubic.prototype.pt = function (u) {
+    const [a, b, c, d] = this.p, v = 1 - u, A = v * v * v, B = 3 * v * v * u, C = 3 * v * u * u, D = u * u * u;
+    return { x: A * a.x + B * b.x + C * c.x + D * d.x, y: A * a.y + B * b.y + C * c.y + D * d.y };
+  };
+  Cubic.prototype.tan = function (u) {
+    const [a, b, c, d] = this.p, v = 1 - u;
+    const x = 3 * v * v * (b.x - a.x) + 6 * v * u * (c.x - b.x) + 3 * u * u * (d.x - c.x);
+    const y = 3 * v * v * (b.y - a.y) + 6 * v * u * (c.y - b.y) + 3 * u * u * (d.y - c.y);
+    const l = Math.hypot(x, y) || 1; return { x: x / l, y: y / l };
+  };
+  Cubic.prototype.u = function (s) {           // fraction of length -> curve parameter
+    const target = clamp01(s) * this.len, L = this.lut; let lo = 0, hi = this.N;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (L[m] < target) lo = m; else hi = m; }
+    return (lo + (target - L[lo]) / ((L[hi] - L[lo]) || 1)) / this.N;
+  };
+  Cubic.prototype.at = function (s) { return this.pt(this.u(s)); };
+  Cubic.prototype.nrm = function (s) { const t = this.tan(this.u(s)); return { x: -t.y, y: t.x }; };
+  Cubic.prototype.d = function () { const [a, b, c, d] = this.p; return `M${f(a.x)} ${f(a.y)}C${f(b.x)} ${f(b.y)} ${f(c.x)} ${f(c.y)} ${f(d.x)} ${f(d.y)}`; };
+  // the S-curve from a message's bottom to a reply's top
+  function sCurve(x1, y1, x2, y2) { const my = (y1 + y2) / 2; return new Cubic({ x: x1, y: y1 }, { x: x1, y: my }, { x: x2, y: my }, { x: x2, y: y2 }); }
+  // down, across, down, with rounded corners
+  function elbowD(x1, y1, x2, y2, r, at) {
+    if (Math.abs(x2 - x1) < 0.5) return `M${f(x1)} ${f(y1)}V${f(y2)}`;
+    const yj = y1 + (y2 - y1) * at, s = Math.sign(x2 - x1);
+    r = Math.min(r, Math.abs(x2 - x1) / 2, yj - y1, y2 - yj);
+    const k = 0.5523 * r;
+    return `M${f(x1)} ${f(y1)}V${f(yj - r)}C${f(x1)} ${f(yj - r + k)} ${f(x1 + s * (r - k))} ${f(yj)} ${f(x1 + s * r)} ${f(yj)}` +
+           `H${f(x2 - s * r)}C${f(x2 - s * (r - k))} ${f(yj)} ${f(x2)} ${f(yj + r - k)} ${f(x2)} ${f(yj + r)}V${f(y2)}`;
+  }
+  // a filled stroke whose width changes along the curve, with round ends
+  function ribbonD(c, s0, s1, wf, n) {
+    if (s1 - s0 < 1e-4) return '';
+    const L = [], R = [];
+    for (let i = 0; i <= n; i++) {
+      const s = s0 + (s1 - s0) * i / n, p = c.at(s), q = c.nrm(s), w = wf(s) / 2;
+      L.push(p.x + q.x * w, p.y + q.y * w); R.push(p.x - q.x * w, p.y - q.y * w);
+    }
+    const we = Math.max(0.05, wf(s1) / 2), ws = Math.max(0.05, wf(s0) / 2);
+    let d = `M${f(L[0])} ${f(L[1])}`;
+    for (let i = 2; i < L.length; i += 2) d += `L${f(L[i])} ${f(L[i + 1])}`;
+    d += `A${f(we)} ${f(we)} 0 0 0 ${f(R[R.length - 2])} ${f(R[R.length - 1])}`;
+    for (let i = R.length - 4; i >= 0; i -= 2) d += `L${f(R[i])} ${f(R[i + 1])}`;
+    return d + `A${f(ws)} ${f(ws)} 0 0 0 ${f(L[0])} ${f(L[1])}Z`;
+  }
+  // the concave "meniscus" where a stem meets a bubble edge. dir 1: stem leaves downward, -1: stem arrives from above
+  function flareD(x, y, w, r, dir) {
+    if (r < 0.2) return '';
+    const h = w / 2, d = dir;
+    return `M${f(x - h - r)} ${f(y - d * 3)}L${f(x - h - r)} ${f(y)}C${f(x - h - r * 0.4)} ${f(y)} ${f(x - h)} ${f(y + d * r * 0.42)} ${f(x - h)} ${f(y + d * r)}` +
+           `L${f(x + h)} ${f(y + d * r)}C${f(x + h)} ${f(y + d * r * 0.42)} ${f(x + h + r * 0.4)} ${f(y)} ${f(x + h + r)} ${f(y)}L${f(x + h + r)} ${f(y - d * 3)}Z`;
+  }
+  const inRoundRect = (x, y, w, h, r) => { const cx = x < r ? r : x > w - r ? w - r : x, cy = y < r ? r : y > h - r ? h - r : y; return (x - cx) ** 2 + (y - cy) ** 2 <= r * r; };
+  const edgeBox = (e, pad = 24) => ({ x: Math.min(e.p.x, e.c.x) - pad, y: e.p.bottom - pad, w: Math.abs(e.c.x - e.p.x) + 2 * pad, h: e.c.y - e.p.bottom + 2 * pad });
+  const hits = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+  /* ---------- bubbles ---------- */
+  function setBub(el, o) {
+    const sx = f(o.sx ?? o.s ?? 1), sy = f(o.sy ?? o.s ?? 1), x = f(o.x || 0), y = f(o.y || 0);
+    css(el, 'opacity', f(clamp01(o.o ?? 1)));
+    css(el, 'transform', x === '0' && y === '0' && sx === '1' && sy === '1' ? '' : `translate(${x}px,${y}px) scale(${sx},${sy})`);
+  }
+  function clearBub(el) { css(el, 'opacity', ''); css(el, 'transform', ''); }
+  function textAlpha(b, a) { css(b.el, 'color', a >= 1 ? '' : `rgba(${TEXT[b.from].join(',')},${f(clamp01(a))})`); }
+  // A reply arriving: a quick fade and a small spring from its top edge, where the line lands.
+  // A reply the user is typing into is never hidden; it only settles in place.
+  function popChild(e, k, at, sp, from, dy) {
+    const el = e.c.el;
+    if (e.quick) {
+      if (k > 1.2) { clearBub(el); return 1; }
+      const s = spring(Math.max(0, k) + 0.016, 0.42, 0.75);
+      setBub(el, { o: 1, y: (1 - s) * -4, s: 0.92 + 0.08 * s });
+      return s;
+    }
+    const kk = k - at;
+    if (kk <= 0) { css(el, 'opacity', '0'); return 0; }
+    if (kk > 1.6) { clearBub(el); return 1; }
+    const s = spring(kk, sp[0], sp[1]);
+    setBub(el, { o: kk / 0.12, y: (1 - s) * dy, s: from + (1 - from) * s });
+    return s;
+  }
+
+  const GROUPS = ['Quiet lines', 'Motion that explains', 'Signature moments'];
+  const STYLES = [], byId = {};
+  // arrive: when a reply has landed, so its own replies wait for it in a cascade
+  const def = s => { s.stagger = s.stagger ?? 0.05; s.arrive = s.arrive ?? 0.25; STYLES.push(s); byId[s.id] = s; };
+
+  /* ======================================================================
+     Quiet lines: once a reply lands, nothing moves
+     ====================================================================== */
+  def({ id: 'thread', group: 0, arrive: 0.2, name: 'Thread',
+    desc: 'A hairline that turns into each reply on a rounded corner, like inline replies in Messages.',
+    build(E, X) {
+      const g = svgEl('g', { class: 'rl-ln', opacity: '.62', fill: 'none', 'stroke-width': '1.6', 'stroke-linecap': 'round' }, X.svg);
+      for (const e of E) { e.d = elbowD(e.p.x, e.p.bottom, e.c.x, e.c.y, 16, 0.42); e.path = svgEl('path', { d: e.d, pathLength: '1' }, g); }
+      return { glintD: e => e.d,
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) { if (!e.done) { drawP(e.path, 1); clearBub(e.c.el); e.done = true; } continue; }
+            busy = true; drawP(e.path, spring(k, 0.5, 1)); popChild(e, k, 0.2, [0.45, 0.74], 0.84, -7);
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'freeform', group: 0, arrive: 0.28, name: 'Freeform',
+    desc: 'A soft curve that ends in a small arrowhead, like the connectors in Freeform. Hover a line to see its handles.',
+    build(E, X) {
+      const glowG = svgEl('g', { fill: 'none', stroke: '#0A84FF', 'stroke-width': '6', 'stroke-linecap': 'round' }, X.svg);
+      const lineG = svgEl('g', { class: 'rl-ln', 'stroke-opacity': '.92', fill: 'none', 'stroke-width': '2', 'stroke-linecap': 'round' }, X.svg);
+      const headG = svgEl('g', { class: 'rl-ln rl-lf', 'fill-opacity': '.92', 'stroke-opacity': '.92', 'stroke-width': '2', 'stroke-linejoin': 'round' }, X.svg);
+      const hitG = svgEl('g', {}, X.svg), handG = svgEl('g', {}, X.overSvg);
+      for (const e of E) {
+        const y0 = e.p.bottom + 1.5, tipY = e.c.y - 2.5, baseY = tipY - 7;
+        const c = sCurve(e.p.x, y0, e.c.x, baseY + 1.2), d = c.d(), m = c.at(0.5);
+        Object.assign(e, { d, tipY, hov: 0, hf: 0, ht: 0, t0: -9,
+          glow: svgEl('path', { d, opacity: '0' }, glowG),
+          line: svgEl('path', { d, pathLength: '1' }, lineG),
+          head: svgEl('path', { d: `M${f(e.c.x - 4.4)} ${f(baseY)}L${f(e.c.x + 4.4)} ${f(baseY)}L${f(e.c.x)} ${f(tipY)}Z` }, headG),
+          hands: svgEl('g', { opacity: '0' }, handG) });
+        [[e.p.x, y0, 1], [e.c.x, tipY, 1], [m.x, m.y, 0]].forEach(([x, y, end]) =>
+          svgEl('circle', { cx: f(x), cy: f(y), r: end ? '4.6' : '3.9', fill: end ? '#fff' : '#0A84FF', stroke: end ? '#0A84FF' : '#fff', 'stroke-width': '2' }, e.hands));
+        const hit = svgEl('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': '16', 'pointer-events': 'stroke' }, hitG);
+        const hover = on => { e.hf = e.hov; e.ht = on; e.t0 = nowS(); X.kick(); };
+        hit.addEventListener('pointerenter', () => hover(1));
+        hit.addEventListener('pointerleave', () => hover(0));
+      }
+      return { glintD: e => e.d,
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born, hk = t - e.t0;
+            e.hov = e.hf + (e.ht - e.hf) * spring(hk, 0.28, 1);
+            if (k > 2 && e.done && hk > 0.8) continue;
+            const p = spring(k, 0.6, 1), ta = 0.28, hs = Math.max(0, spring(k - ta, 0.36, 0.56));
+            drawP(e.line, p);
+            attr(e.head, 'visibility', k > ta ? 'visible' : 'hidden');
+            attr(e.head, 'transform', hs > 0.9999 && hs < 1.0001 ? '' : `translate(${f(e.c.x)} ${f(e.tipY)}) scale(${f(hs)}) translate(${f(-e.c.x)} ${f(-e.tipY)})`);
+            popChild(e, k, ta, [0.45, 0.72], 0.84, -7);
+            attr(e.hands, 'opacity', f(e.hov * clamp01(p)));
+            attr(e.glow, 'opacity', f(e.hov * clamp01(p) * 0.45));
+            if (k <= 2 || hk <= 0.8) busy = true; else e.done = true;
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'count', group: 0, arrive: 0.32, name: 'Reply count', stagger: 0.25,
+    desc: 'Hairlines, plus a glass capsule that counts the replies wherever a message branches. Click the capsule to fold them.',
+    build(E, X) {
+      const g = svgEl('g', { class: 'rl-ln', opacity: '.6', fill: 'none', 'stroke-width': '1.4', 'stroke-linecap': 'round' }, X.svg);
+      const groups = new Map(), caps = [], seen = new Set();
+      for (const e of E) { if (!groups.has(e.p.id)) groups.set(e.p.id, []); groups.get(e.p.id).push(e); }
+      groups.forEach((list, pid) => {
+        const P = list[0].p, n = list.length;
+        if (n < 2) { for (const e of list) { e.d = elbowD(P.x, P.bottom, e.c.x, e.c.y, 14, 0.5); e.path = svgEl('path', { d: e.d, pathLength: '1' }, g); } return; }
+        seen.add(pid);
+        const pcy = P.bottom + 22, prev = X.first ? n : (X.counts.get(pid) || 0), from = prev >= 2 ? prev : n;
+        const stem = svgEl('path', { d: `M${f(P.x)} ${f(P.bottom)}V${f(pcy - 11)}`, pathLength: '1' }, g);
+        for (const e of list) { e.d = elbowD(P.x, pcy + 11, e.c.x, e.c.y, 14, 0.5); e.path = svgEl('path', { d: e.d, pathLength: '1' }, g); }
+        const btn = htmlEl('button', 'rl-count', X.under);
+        btn.type = 'button'; btn.setAttribute('aria-label', `Fold ${n} replies`);
+        btn.innerHTML = `<span class="rl-roll"><span class="rl-track"><span>${from} replies</span><span>${n} replies</span></span></span><svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1.3 1.2 5 4.8l3.7-3.6"/></svg>`;
+        btn.style.left = f(P.x) + 'px'; btn.style.top = f(pcy) + 'px';
+        btn.addEventListener('pointerdown', ev => ev.stopPropagation());
+        btn.addEventListener('dblclick', ev => ev.stopPropagation());
+        btn.addEventListener('click', ev => { ev.stopPropagation(); X.fold(pid); });
+        const roll = btn.firstElementChild, track = roll.firstElementChild;
+        const newest = Math.max(...list.map(e => e.born));
+        caps.push({ btn, roll, track, stem, w1: track.children[0].offsetWidth, w2: track.children[1].offsetWidth,
+          tPop: prev < 2 ? newest : SETTLED,                                   // a new branch: the capsule arrives with its newest line
+          tRoll: prev >= 2 && prev !== n ? Math.max(X.t, newest) : SETTLED });  // a branch that grew or shrank: the count rolls
+        X.counts.set(pid, n);
+      });
+      for (const pid of [...X.counts.keys()]) if (!seen.has(pid)) X.counts.delete(pid);
+      return { glintD: e => e.d,
+        update(t) {
+          let busy = false;
+          for (const c of caps) {
+            const k = t - c.tPop, kr = t - c.tRoll;
+            if (k > 2 && kr > 2) {
+              if (!c.done) { drawP(c.stem, 1); css(c.btn, 'opacity', ''); css(c.btn, 'transform', ''); css(c.roll, 'width', f(c.w2) + 'px'); css(c.track, 'transform', 'translateY(-15px)'); c.done = true; }
+              continue;
+            }
+            busy = true;
+            drawP(c.stem, spring(k, 0.28, 1));
+            css(c.btn, 'opacity', f(clamp01((k - 0.06) / 0.1)));
+            css(c.btn, 'transform', `translate(-50%,-50%) scale(${f(0.55 + 0.45 * (k > 0.06 ? spring(k - 0.06, 0.45, 0.6) : 0))})`);
+            const n = clamp01(spring(kr, 0.42, 0.82));
+            css(c.roll, 'width', f(c.w1 + (c.w2 - c.w1) * n) + 'px'); css(c.track, 'transform', `translateY(${f(-15 * n)}px)`);
+          }
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) { if (!e.done) { drawP(e.path, 1); clearBub(e.c.el); e.done = true; } continue; }
+            busy = true; drawP(e.path, spring(k - 0.1, 0.5, 1)); popChild(e, k, 0.32, [0.45, 0.72], 0.84, -7);
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'glass', group: 0, arrive: 0.36, name: 'Liquid Glass',
+    desc: 'A glass stem that pools where it meets each bubble and catches the light from your pointer.',
+    build(E, X) {
+      const fid = uid('lg');
+      X.defs.insertAdjacentHTML('beforeend',
+        `<filter id="${fid}" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">` +
+        `<feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="s0"/><feOffset in="s0" dy="2.5" result="s1"/>` +
+        `<feFlood flood-color="#26105e" flood-opacity=".3"/><feComposite in2="s1" operator="in" result="s2"/>` +
+        `<feComposite in="s2" in2="SourceAlpha" operator="out" result="shadow"/>` +
+        `<feFlood flood-color="#fff" flood-opacity=".22"/><feComposite in2="SourceAlpha" operator="in" result="body"/>` +
+        `<feGaussianBlur in="SourceAlpha" stdDeviation="1.7" result="bump"/>` +
+        `<feSpecularLighting in="bump" surfaceScale="4" specularConstant="1.35" specularExponent="20" lighting-color="#fff" result="sp"><fePointLight x="0" y="0" z="80"/></feSpecularLighting>` +
+        `<feComposite in="sp" in2="SourceAlpha" operator="in" result="spec"/>` +
+        `<feMorphology in="SourceAlpha" operator="erode" radius="1" result="er"/><feComposite in="SourceAlpha" in2="er" operator="out" result="rm"/>` +
+        `<feFlood flood-color="#fff" flood-opacity=".52"/><feComposite in2="rm" operator="in" result="rim"/>` +
+        `<feMerge><feMergeNode in="shadow"/><feMergeNode in="body"/><feMergeNode in="spec"/><feMergeNode in="rim"/></feMerge></filter>`);
+      const light = X.defs.lastElementChild.querySelector('fePointLight');
+      const groups = new Map(), W = 6, R = 7.5;
+      for (const e of E) {
+        // one filtered group per message, so the stems of its replies merge into one piece of glass
+        let g = groups.get(e.p.id);
+        if (!g) { g = svgEl('g', { filter: `url(#${fid})`, fill: '#000' }, X.svg); groups.set(e.p.id, g); }
+        e.cv = sCurve(e.p.x, e.p.bottom - 2, e.c.x, e.c.y + 2);
+        e.stem = svgEl('path', {}, g); e.ft = svgEl('path', {}, g); e.fb = svgEl('path', {}, g);
+      }
+      const L = X.mem.light || (X.mem.light = { x: 0, y: 0, on: false });
+      const home = () => { const v = X.view(), c = X.canvas; return { x: (c.clientWidth * 0.3 - v.panX) / v.zoom, y: (-c.clientHeight * 0.12 - v.panY) / v.zoom }; };
+      return {
+        pointer() {},          // the light reads the pointer; this only keeps frames coming while it moves
+        update(t) {
+          const goal = X.pointerWorld || home();
+          if (!L.on) { L.x = goal.x; L.y = goal.y; L.on = true; }
+          const a = 1 - Math.exp(-X.dt * 9); L.x += (goal.x - L.x) * a; L.y += (goal.y - L.y) * a;
+          attr(light, 'x', f(L.x)); attr(light, 'y', f(L.y));
+          let busy = Math.abs(goal.x - L.x) + Math.abs(goal.y - L.y) > 0.6;
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) {
+              if (!e.done) { attr(e.stem, 'd', ribbonD(e.cv, 0, 1, () => W, 28)); attr(e.ft, 'd', flareD(e.p.x, e.p.bottom, W, R, 1)); attr(e.fb, 'd', flareD(e.c.x, e.c.y, W, R, -1)); clearBub(e.c.el); e.done = true; }
+              continue;
+            }
+            busy = true;
+            if (k <= 0) { attr(e.stem, 'd', ''); attr(e.ft, 'd', ''); attr(e.fb, 'd', ''); popChild(e, k, 0.36); continue; }
+            const p = clamp01(spring(k, 0.6, 1)), bulb = 2.4 * (1 - p);
+            attr(e.stem, 'd', ribbonD(e.cv, 0, Math.max(0.002, p), s => W + bulb * clamp01((s - p + 0.16) / 0.16), 28));
+            attr(e.ft, 'd', flareD(e.p.x, e.p.bottom, W, R * Math.max(0, spring(k, 0.42, 0.55)), 1));
+            const ka = k - 0.38;
+            attr(e.fb, 'd', ka > 0 ? flareD(e.c.x, e.c.y, W, R * Math.max(0, spring(ka, 0.42, 0.55)), -1) : '');
+            popChild(e, k, 0.36, [0.5, 0.72], 0.9, -5);
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'pencil', group: 0, arrive: 0.47, name: 'Pencil', stagger: 0.3,
+    desc: 'Each line is written in like a pen stroke, thin to thick to thin, at the pace of a hand.',
+    build(E, X) {
+      const g = svgEl('g', { class: 'rl-lf', 'fill-opacity': '.92' }, X.svg);
+      const wf = s => 0.6 + 2.5 * Math.pow(Math.sin(Math.PI * Math.pow(clamp01(s), 0.78)), 0.85), DUR = 0.55;
+      for (const e of E) {
+        const x1 = e.p.x, y1 = e.p.bottom + 5, x2 = e.c.x, y2 = e.c.y - 6, dx = x2 - x1, dy = y2 - y1, wob = Math.abs(dx) < 1 ? 6 : 0;
+        e.cv = new Cubic({ x: x1, y: y1 }, { x: x1 + wob + dx * 0.06, y: y1 + dy * 0.58 }, { x: x2 - wob - dx * 0.1, y: y1 + dy * 0.36 }, { x: x2, y: y2 });
+        e.path = svgEl('path', {}, g);
+      }
+      return { glintD: e => e.cv.d(),
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) { if (!e.done) { attr(e.path, 'd', ribbonD(e.cv, 0, 1, wf, 36)); clearBub(e.c.el); e.done = true; } continue; }
+            busy = true;
+            const p = minJerk(prog(k, 0, DUR));
+            attr(e.path, 'd', p > 0.002 ? ribbonD(e.cv, 0, p, wf, Math.max(4, Math.round(36 * p))) : '');
+            popChild(e, k, DUR * 0.86, [0.45, 0.74], 0.84, -7);
+          }
+          return busy;
+        } };
+    } });
+
+  /* ======================================================================
+     Motion that explains: an entrance that shows where a reply came from, then stillness.
+     A reply the user is typing into is never hidden behind these entrances.
+     ====================================================================== */
+  def({ id: 'typing', group: 1, arrive: 1.19, name: 'Typing',
+    desc: 'Typing dots appear where a reply is about to show, then grow into the bubble.',
+    build(E, X) {
+      const g = svgEl('g', { class: 'rl-ln', opacity: '.5', fill: 'none', 'stroke-width': '1.4', 'stroke-linecap': 'round' }, X.svg);
+      for (const e of E) { e.d = sCurve(e.p.x, e.p.bottom, e.c.x, e.c.y).d(); e.line = svgEl('path', { d: e.d, pathLength: '1' }, g); }
+      const W0 = 60, H0 = 38, SHOW = 0.12, MORPH = 0.85;
+      return { glintD: e => e.d,
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born, c = e.c;
+            if (k > 2.2) { if (!e.done) { drawP(e.line, 1); clearBub(c.el); css(c.el, 'color', ''); if (e.sh) { e.sh.remove(); e.sh = null; } e.done = true; } continue; }
+            busy = true;
+            drawP(e.line, spring(k, 0.5, 1));
+            if (e.quick) { popChild(e, k, 0); continue; }
+            const ks = k - SHOW;
+            if (ks <= 0) { css(c.el, 'opacity', '0'); continue; }
+            if (!e.sh) {
+              e.sh = htmlEl('div', 'rl-typing ' + c.from, X.over);
+              e.sh.style.setProperty('--c', c.color);
+              e.sh.innerHTML = '<b class="rl-t1"></b><b class="rl-t2"></b><span class="rl-dots"><i></i><i></i><i></i></span>';
+              e.dots = [...e.sh.querySelectorAll('i')]; e.tails = [...e.sh.querySelectorAll('b')]; e.dw = e.sh.querySelector('.rl-dots');
+            }
+            const km = k - MORPH, pop = spring(ks, 0.42, 0.6), m = Math.max(0, spring(km, 0.4, 0.88)), mc = Math.min(m, 1.03);
+            const w = W0 + (c.w - W0) * mc, h = H0 + (c.h - H0) * mc;
+            css(e.sh, 'width', f(w) + 'px'); css(e.sh, 'height', f(h) + 'px');
+            css(e.sh, 'left', f(c.x - w / 2) + 'px'); css(e.sh, 'top', f(c.y) + 'px');
+            css(e.sh, 'border-radius', f(Math.min(h / 2, 19 + 1.25 * clamp01(m))) + 'px');
+            css(e.sh, 'opacity', f(km > 0.36 ? 0 : clamp01(ks / 0.1)));
+            css(e.sh, 'transform', `scale(${f(0.55 + 0.45 * pop)})`);
+            css(e.dw, 'opacity', f(1 - clamp01(m * 3.5)));
+            e.dots.forEach((d, j) => {
+              const v = Math.pow(0.5 + 0.5 * Math.cos(2 * Math.PI * (ks * 0.95 - j * 0.16 - 0.25)), 2);
+              css(d, 'opacity', f(0.35 + 0.65 * v)); css(d, 'transform', `scale(${f(0.86 + 0.18 * v)})`);
+            });
+            e.tails.forEach((b, j) => css(b, 'transform', `scale(${f(1 - clamp01(m * (j ? 2.6 : 1.6)))})`));
+            // same color and size by now, so swapping in the real bubble is invisible; only its text fades up
+            if (km > 0.34) { clearBub(c.el); textAlpha(c, (km - 0.34) / 0.16); } else css(c.el, 'opacity', '0');
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'droplet', group: 1, arrive: 0.6, name: 'Droplet',
+    desc: 'Each reply buds off the message above it and pinches free like a drop, leaving a fine strand.',
+    build(E, X) {
+      const fid = uid('goo');
+      X.defs.insertAdjacentHTML('beforeend',
+        `<filter id="${fid}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">` +
+        `<feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 21 -9" result="g"/>` +
+        `<feComposite in="SourceGraphic" in2="g" operator="atop"/></filter>`);
+      const strands = svgEl('g', { fill: 'none', 'stroke-width': '1.8', 'stroke-linecap': 'round' }, X.svg);
+      const flares = svgEl('g', {}, X.svg), gooLayer = svgEl('g', {}, X.svg);
+      for (const e of E) {
+        const gid = uid('dg');
+        e.grad = svgEl('linearGradient', { id: gid, gradientUnits: 'userSpaceOnUse', x1: f(e.p.x), y1: f(e.p.bottom), x2: f(e.c.x), y2: f(e.c.y) }, X.defs);
+        e.s0 = svgEl('stop', { offset: '0', 'stop-color': e.p.color }, e.grad);
+        e.s1 = svgEl('stop', { offset: '1', 'stop-color': e.c.color }, e.grad);
+        e.d = sCurve(e.p.x, e.p.bottom, e.c.x, e.c.y).d();
+        e.strand = svgEl('path', { d: e.d, stroke: `url(#${gid})`, pathLength: '1', opacity: '0' }, strands);
+        e.ft = svgEl('path', { fill: e.p.color }, flares); e.fb = svgEl('path', { fill: e.c.color }, flares);
+      }
+      const rect = (r, cx, cy, w, h) => {
+        if (w <= 0.5 || h <= 0.5) { attr(r, 'width', '0'); attr(r, 'height', '0'); return; }
+        const rx = f(Math.min(h / 2, 18.5));
+        attr(r, 'x', f(cx - w / 2)); attr(r, 'y', f(cy - h / 2)); attr(r, 'width', f(w)); attr(r, 'height', f(h)); attr(r, 'rx', rx); attr(r, 'ry', rx);
+      };
+      return { glintD: e => e.d,
+        retint() { for (const e of E) { attr(e.s0, 'stop-color', e.p.color); attr(e.s1, 'stop-color', e.c.color); attr(e.ft, 'fill', e.p.color); attr(e.fb, 'fill', e.c.color); } },
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const P = e.p, C = e.c, k = t - e.born;
+            if (k > 2.2) {
+              if (!e.done) { drawP(e.strand, 1); attr(e.strand, 'opacity', '.9'); attr(e.ft, 'd', flareD(P.x, P.bottom, 1.8, 4.5, 1)); attr(e.fb, 'd', flareD(C.x, C.y, 1.8, 4.5, -1)); clearBub(C.el); if (e.goo) { e.goo.remove(); e.goo = null; } e.done = true; }
+              continue;
+            }
+            busy = true;
+            if (e.quick) {          // typing into it: just let the strand run down to it
+              drawP(e.strand, spring(k, 0.5, 1)); attr(e.strand, 'opacity', '.9');
+              attr(e.ft, 'd', flareD(P.x, P.bottom, 1.8, 4.5 * Math.max(0, spring(k, 0.42, 0.6)), 1));
+              attr(e.fb, 'd', k > 0.3 ? flareD(C.x, C.y, 1.8, 4.5 * Math.max(0, spring(k - 0.3, 0.42, 0.6)), -1) : '');
+              popChild(e, k, 0); continue;
+            }
+            if (k <= 0) { css(C.el, 'opacity', '0'); attr(e.strand, 'opacity', '0'); attr(e.ft, 'd', ''); attr(e.fb, 'd', ''); continue; }
+            if (!e.goo) {
+              e.goo = svgEl('g', { filter: `url(#${fid})` }, gooLayer);
+              e.neck = svgEl('line', { stroke: P.color, 'stroke-linecap': 'round' }, svgEl('g', {}, e.goo));   // necks sit under the drops
+              e.proxy = svgEl('rect', { fill: P.color }, e.goo); e.blob = svgEl('rect', { fill: C.color }, e.goo);
+              rect(e.proxy, P.x, P.cy, P.w - 3, P.h - 3);
+            }
+            const bud = clamp01(spring(k, 0.3, 1));                  // a bulge forms on the message's edge
+            const m = Math.max(0, spring(k - 0.12, 0.9, 0.62));     // it pulls away, then lands with a bounce
+            const z = clamp01(spring(k - 0.34, 0.5, 0.66));          // and grows into the reply
+            const sx = P.x, sy = P.bottom - 3, cx = sx + (C.x - sx) * m, cy = sy + (C.cy - sy) * m, ds = 20 * bud;
+            rect(e.blob, cx, cy, ds + (C.w - 3 - ds) * z, ds + (C.h - 3 - ds) * z);
+            attr(e.neck, 'x1', f(sx)); attr(e.neck, 'y1', f(sy - 3)); attr(e.neck, 'x2', f(cx)); attr(e.neck, 'y2', f(cy));
+            attr(e.neck, 'stroke-width', f(14 * Math.pow(clamp01(1 - m / 0.55), 0.7) * bud));   // thins, then pinches off
+            const sa = clamp01((m - 0.5) / 0.3);
+            drawP(e.strand, 1); attr(e.strand, 'opacity', f(0.9 * sa));
+            attr(e.ft, 'd', flareD(P.x, P.bottom, 1.8, 4.5 * sa, 1)); attr(e.fb, 'd', flareD(C.x, C.y, 1.8, 4.5 * sa, -1));
+            const show = clamp01((z - 0.86) / 0.12);
+            if (show <= 0) css(C.el, 'opacity', '0'); else if (show >= 1 && k > 1.2) clearBub(C.el); else setBub(C.el, { o: show });
+            if (k > 1.6 && e.goo) { e.goo.remove(); e.goo = null; }
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'magic', group: 1, arrive: 0.6, name: 'Magic Move',
+    desc: 'A copy of the message lifts off and turns into the reply on its way down, like Keynote\u2019s Magic Move.',
+    build(E, X) {
+      const gT = svgEl('g', { class: 'rl-lf' }, X.svg), gR = svgEl('g', { class: 'rl-lf', 'fill-opacity': '.58' }, X.svg);
+      const taper = s => 0.7 + 2.9 * Math.pow(s, 1.5);
+      for (const e of E) {
+        e.cv = sCurve(e.p.x, e.p.bottom, e.c.x, e.c.y); e.mc = sCurve(e.p.x, e.p.cy, e.c.x, e.c.cy);
+        e.restD = ribbonD(e.cv, 0, 1, taper, 28); e.rest = svgEl('path', {}, gR);
+      }
+      return { glintD: e => e.cv.d(),
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const P = e.p, C = e.c, k = t - e.born;
+            if (k > 2) {
+              if (!e.done) { attr(e.rest, 'd', e.restD); attr(e.rest, 'opacity', '1'); clearBub(C.el); if (e.sh) { e.sh.remove(); e.sh = null; } if (e.trail) { e.trail.remove(); e.trail = null; } e.done = true; }
+              continue;
+            }
+            busy = true;
+            if (e.quick) { const p = Math.min(1, spring(k, 0.5, 1)); attr(e.rest, 'd', p > 0.002 ? ribbonD(e.cv, 0, p, taper, 24) : ''); attr(e.rest, 'opacity', '1'); popChild(e, k, 0); continue; }
+            if (k <= 0) { css(C.el, 'opacity', '0'); attr(e.rest, 'd', ''); continue; }
+            if (!e.sh) {
+              e.sh = htmlEl('div', 'rl-mm ' + P.from, X.over); e.sh.textContent = P.el.textContent;
+              const fid = blurFilter(X.defs, { x: Math.min(P.x, C.x) - 30, y: P.bottom - 30, w: Math.abs(C.x - P.x) + 60, h: C.y - P.bottom + 60 }, 2.6);
+              e.trail = svgEl('path', { filter: `url(#${fid})`, opacity: '0' }, gT);
+            }
+            const lift = spring(k, 0.28, 0.85), m = spring(k - 0.14, 0.62, 0.78), mm = clamp01(m);
+            const land = clamp01(spring(k - 0.58, 0.32, 1)), L = lift * (1 - land);
+            const q = e.mc.pt(mm), cx = q.x, cy = q.y + (m - mm) * (C.cy - P.cy) * 0.5;
+            const w = P.w + (C.w - P.w) * mm, h = P.h + (C.h - P.h) * mm;
+            css(e.sh, 'left', f(cx - w / 2) + 'px'); css(e.sh, 'top', f(cy - h / 2) + 'px'); css(e.sh, 'width', f(w) + 'px'); css(e.sh, 'height', f(h) + 'px');
+            css(e.sh, 'background', rgb(mixc(P.rgb, C.rgb, clamp01(mm * 1.35))));
+            css(e.sh, 'transform', `scale(${f(1 + 0.035 * L)})`);
+            css(e.sh, 'box-shadow', `0 ${f(8 * L)}px ${f(20 * L)}px rgba(30,12,80,${f(0.32 * L)})`);
+            css(e.sh, 'opacity', f(1 - clamp01((k - 0.68) / 0.14)));
+            css(e.sh, 'color', `rgba(${TEXT[P.from].join(',')},${f(1 - clamp01((k - 0.04) / 0.1))})`);
+            const reveal = clamp01((k - 0.6) / 0.1);
+            if (reveal <= 0) css(C.el, 'opacity', '0'); else setBub(C.el, { o: reveal });
+            const ta = 0.55 * (1 - land) * clamp01((k - 0.16) / 0.1), tw = 11 * (1 - land) + 3.6 * land, hd = Math.max(0.01, mm);
+            attr(e.trail, 'opacity', f(ta));
+            attr(e.trail, 'd', ta > 0.01 ? ribbonD(e.cv, 0, hd, s => 0.6 + (tw - 0.6) * Math.pow(s / hd, 1.6), 24) : '');
+            attr(e.rest, 'opacity', f(land)); if (land > 0.01) attr(e.rest, 'd', e.restD);
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'spring', group: 1, arrive: 0.1, name: 'Spring',
+    desc: 'Replies drop in on a spring and each line settles taut. Swipe across a line to pluck it.',
+    build(E, X) {
+      const g = svgEl('g', { class: 'rl-ln', 'stroke-opacity': '.85', fill: 'none', 'stroke-width': '2', 'stroke-linecap': 'round' }, X.svg);
+      const phys = X.mem.phys || (X.mem.phys = new Map()), ids = new Set(E.map(e => e.id));
+      for (const id of [...phys.keys()]) if (!ids.has(id)) phys.delete(id);
+      const K = Math.pow(2 * Math.PI / 0.3, 2), Cd = 2 * 0.09 * Math.sqrt(K);
+      for (const e of E) { e.path = svgEl('path', {}, g); e.ph = phys.get(e.id) || { d: 0, v: 0 }; phys.set(e.id, e.ph); e.sign = e.sib % 2 ? -1 : 1; }
+      const ends = e => ({ x1: e.p.x, y1: e.p.bottom + 2, x2: e.c.x, y2: e.c.y - 2 });
+      return {
+        glintD: e => { const l = ends(e); return `M${f(l.x1)} ${f(l.y1)}L${f(l.x2)} ${f(l.y2)}`; },
+        play(e) { e.ph.v += 380 * e.sign; },           // Play a path plucks each line it walks
+        pointer(p, prev) {
+          if (!p || !prev || p.buttons) return;          // only a free swipe plucks, not a drag to pan
+          const dtp = Math.max(0.008, (p.t - prev.t) / 1000);
+          for (const e of E) {
+            const G = ends(e), vx = G.x2 - G.x1, vy = G.y2 - G.y1, L2 = vx * vx + vy * vy || 1;
+            const side = q => vx * (q.y - G.y1) - vy * (q.x - G.x1);
+            const s0 = side(prev), s1 = side(p), u = ((p.x - G.x1) * vx + (p.y - G.y1) * vy) / L2;
+            if (u > 0.06 && u < 0.94 && s0 !== 0 && Math.sign(s0) !== Math.sign(s1)) {
+              const Lh = Math.sqrt(L2), nx = -vy / Lh, ny = vx / Lh;
+              e.ph.v += clamp(((p.x - prev.x) * nx + (p.y - prev.y) * ny) / dtp, -1400, 1400) * 0.55 * Math.sin(Math.PI * u);
+            }
+          }
+        },
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born, ph = e.ph;
+            let rem = X.dt;
+            while (rem > 1e-5) { const h = Math.min(rem, 1 / 240); ph.v += (-K * ph.d - Cd * ph.v) * h; ph.d += ph.v * h; rem -= h; }
+            ph.d = clamp(ph.d, -30, 30);
+            const moving = Math.abs(ph.d) > 0.02 || Math.abs(ph.v) > 0.5;
+            if (!moving) { ph.d = 0; ph.v = 0; }
+            if (k > 2.2 && !moving) {
+              if (!e.done) { const l = ends(e); attr(e.path, 'd', `M${f(l.x1)} ${f(l.y1)}L${f(l.x2)} ${f(l.y2)}`); attr(e.path, 'opacity', '1'); clearBub(e.c.el); e.done = true; }
+              continue;
+            }
+            busy = true; e.done = false;
+            const drop = e.quick ? -12 : -26, dy = k > 2.2 ? 0 : k > 0 ? (1 - spring(k, 0.52, 0.42)) * drop : drop;
+            if (k <= 2.2) { if (k > 2) clearBub(e.c.el); else setBub(e.c.el, { o: e.quick ? 1 : k / 0.1, y: dy }); }
+            const x1 = e.p.x, y1 = e.p.bottom + 2, x2 = e.c.x, y2 = e.c.y + dy - 2;
+            const len = Math.hypot(x2 - x1, y2 - y1) || 1, nx = -(y2 - y1) / len, ny = (x2 - x1) / len;
+            const off = 2 * (wobble(k - 0.04, 6 * e.sign, 0.32, 0.14) + ph.d);
+            attr(e.path, 'd', `M${f(x1)} ${f(y1)}Q${f((x1 + x2) / 2 + nx * off)} ${f((y1 + y2) / 2 + ny * off)} ${f(x2)} ${f(y2)}`);
+            attr(e.path, 'opacity', f(e.quick || k > 2.2 ? 1 : k > 0 ? clamp01(k / 0.1) : 0));
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'focus', group: 1, arrive: 0.2, name: 'Focus',
+    desc: 'During Play a path, the message being played stays sharp and the rest soften, the way synced lyrics follow a song.',
+    build(E, X) {
+      const P = X.P;
+      const base = svgEl('g', { class: 'rl-ln', opacity: '.42', fill: 'none', 'stroke-width': '1.3', 'stroke-linecap': 'round' }, X.svg);
+      const hiG = svgEl('g', { fill: 'none', stroke: '#fff', 'stroke-linecap': 'round' }, X.svg);
+      for (const e of E) { e.d = sCurve(e.p.x, e.p.bottom, e.c.x, e.c.y).d(); e.base = svgEl('path', { d: e.d, pathLength: '1' }, base); }
+      const hi = new Map();
+      const light = e => {
+        let h = hi.get(e.id);
+        if (!h) {
+          const fid = blurFilter(X.defs, edgeBox(e), 2.4);
+          h = { glow: svgEl('path', { d: e.d, pathLength: '1', 'stroke-width': '5', 'stroke-opacity': '.5', filter: `url(#${fid})` }, hiG), core: svgEl('path', { d: e.d, pathLength: '1', 'stroke-width': '2' }, hiG) };
+          hi.set(e.id, h);
+        }
+        return h;
+      };
+      // each message's focus over time, from the path as it is played
+      const keysFor = id => {
+        const keys = [[-1e9, 1], [P.start, id === P.root ? 1 : 0]];
+        for (const s of P.steps) { if (s.from === id) keys.push([s.t + 0.05, 0]); if (s.to === id) keys.push([s.t + 0.18, 1]); }
+        if (P.end > 0) keys.push([P.end, 1]);
+        return keys;
+      };
+      let lit = false;
+      return {
+        play() {},
+        update(t) {
+          let busy = false;
+          const endK = P.end > 0 ? t - P.end : -1, active = P.on || (endK >= 0 && endK < 1.2);
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) { if (!e.done) { drawP(e.base, 1); if (!active) clearBub(e.c.el); e.done = true; } continue; }
+            busy = true; drawP(e.base, spring(k, 0.5, 1)); if (!active) popChild(e, k, 0.2, [0.45, 0.74], 0.84, -7);
+          }
+          if (active) {
+            busy = lit = true;
+            for (const b of X.nodes) {
+              const fv = keyed(t, keysFor(b.id), [0.55, 1]), sharp = fv > 0.985;
+              css(b.el, 'filter', sharp ? '' : `blur(${f((1 - fv) * 2.6)}px)`);
+              css(b.el, 'opacity', sharp ? '' : f(0.38 + 0.62 * fv));
+              css(b.el, 'transform', sharp ? '' : `scale(${f(0.965 + 0.035 * fv)})`);
+            }
+            const fade = endK >= 0 ? 1 - spring(endK, 0.6, 1) : 1;
+            for (const s of P.steps) {
+              const e = X.edgeMap.get(s.id); if (!e) continue;
+              const h = light(e), p = spring(t - s.t, 0.55, 1);
+              drawP(h.core, p); drawP(h.glow, p); attr(h.core, 'opacity', f(0.95 * fade)); attr(h.glow, 'opacity', f(fade));
+            }
+          } else if (lit) {
+            for (const b of X.nodes) { css(b.el, 'filter', ''); clearBub(b.el); }
+            hi.forEach(h => { h.glow.remove(); h.core.remove(); }); hi.clear();
+            lit = false;
+          }
+          return busy;
+        } };
+    } });
+
+  /* ======================================================================
+     Signature moments. Route and Activity light the path being played only while it plays,
+     then every line goes back to looking the same.
+     ====================================================================== */
+  const activeFor = (P, t, hold) => { const endK = P.end > 0 ? t - P.end : -1; return { endK, on: P.on || (endK >= 0 && endK < hold) }; };
+
+  def({ id: 'route', group: 2, arrive: 0.25, name: 'Route',
+    desc: 'During Play a path, a Maps location puck drives along the lines being played. At rest every line is the same pale route.',
+    build(E, X) {
+      const P = X.P, id = uid('rt');
+      X.defs.insertAdjacentHTML('beforeend',
+        `<filter id="${id}s" x="-100%" y="-100%" width="300%" height="300%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.4" flood-color="#0b1a4a" flood-opacity=".45"/></filter>` +
+        `<radialGradient id="${id}c" cx="0" cy="0" r="34" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3D9BFF" stop-opacity=".8"/><stop offset="1" stop-color="#3D9BFF" stop-opacity="0"/></radialGradient>`);
+      const gAlt = svgEl('g', { fill: 'none', 'stroke-linecap': 'round' }, X.svg), gMain = svgEl('g', { fill: 'none', 'stroke-linecap': 'round' }, X.svg);
+      for (const e of E) {
+        e.cv = sCurve(e.p.x, e.p.bottom + 7, e.c.x, e.c.y - 7); const d = e.cv.d();
+        e.altCase = svgEl('path', { d, pathLength: '1', stroke: 'rgba(28,64,150,.38)', 'stroke-width': '9.5' }, gAlt);
+        e.alt = svgEl('path', { d, pathLength: '1', stroke: '#C4DCFF', 'stroke-width': '6.5' }, gAlt);
+      }
+      const main = new Map();
+      const puck = svgEl('g', { opacity: '0' }, X.svg);
+      const halo = svgEl('circle', { r: '8', fill: '#1E8BFF' }, puck);
+      const cone = svgEl('path', { d: 'M0 0L-15 30A34 34 0 0 0 15 30Z', fill: `url(#${id}c)` }, puck);
+      const body = svgEl('g', {}, puck);
+      svgEl('circle', { r: '8.2', fill: '#fff', filter: `url(#${id}s)` }, body); svgEl('circle', { r: '5.6', fill: '#1E8BFF' }, body);
+      const DRIVE = 0.72, THRU = 0.2;
+      return {
+        play() {},
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) { if (!e.done) { drawP(e.alt, 1); drawP(e.altCase, 1); clearBub(e.c.el); e.done = true; } continue; }
+            busy = true; const p = spring(k, 0.55, 1); drawP(e.alt, p); drawP(e.altCase, p); popChild(e, k, 0.25, [0.45, 0.74], 0.84, -7);
+          }
+          const A = activeFor(P, t, 1), R0 = P.root && X.B[P.root];
+          if (!A.on || !R0) { if (main.size) { main.forEach(m => { m.cs.remove(); m.mn.remove(); }); main.clear(); } attr(puck, 'opacity', '0'); return busy; }
+          const fade = A.endK >= 0 ? 1 - clamp01(A.endK / 0.6) : 1;
+          let pos = { x: R0.x, y: R0.bottom + 7 }, tan = { x: 0, y: 1 }, moving = 0;
+          for (const s of P.steps) {
+            const e = X.edgeMap.get(s.id); if (!e) continue;
+            let m = main.get(s.id);
+            if (!m) { const d = e.cv.d(); m = { cs: svgEl('path', { d, pathLength: '1', stroke: '#0B4FB8', 'stroke-width': '9.6' }, gMain), mn: svgEl('path', { d, pathLength: '1', stroke: '#1E8BFF', 'stroke-width': '7.2' }, gMain) }; main.set(s.id, m); }
+            const k = t - s.t, thru = e.p.id === P.root ? 0 : THRU;   // pass under the message first, then drive its line
+            const q = easeInOut(prog(k, thru, DRIVE));
+            drawP(m.cs, q); drawP(m.mn, q); attr(m.cs, 'opacity', f(fade)); attr(m.mn, 'opacity', f(fade));
+            if (k < thru) { const a = e.p.y - 7, b = e.cv.at(0).y; pos = { x: e.p.x, y: a + (b - a) * prog(k, 0, thru) }; moving = 1; }
+            else { pos = e.cv.at(q); if (q < 1) { tan = e.cv.tan(e.cv.u(q)); moving = 1; } else moving = 0; }
+          }
+          const cm = X.mem.cone = (X.mem.cone || 0) + (moving - (X.mem.cone || 0)) * (1 - Math.exp(-X.dt * 10));
+          attr(puck, 'opacity', f(prog(t, P.start, 0.14) * fade));
+          attr(puck, 'transform', `translate(${f(pos.x)} ${f(pos.y)})`);
+          attr(body, 'transform', `scale(${f(Math.max(0.01, spring(t - P.start, 0.4, 0.6)))})`);
+          attr(cone, 'transform', `rotate(${f(Math.atan2(-tan.x, tan.y) * 180 / Math.PI)})`);
+          attr(cone, 'opacity', f(cm * fade));
+          const ph = ((t - P.start) / 1.9) % 1;
+          attr(halo, 'r', f(8 + 14 * easeOut(ph))); attr(halo, 'opacity', f(t - P.start > 0.25 ? 0.42 * Math.pow(1 - ph, 1.5) * fade : 0));
+          return true;
+        } };
+    } });
+
+  def({ id: 'activity', group: 2, arrive: 0.2, name: 'Activity',
+    desc: 'Every line sits on a track, like the Activity rings. During Play a path, the tracks being played fill, then empty when it ends.',
+    build(E, X) {
+      const P = X.P, id = uid('ac'), C0 = [26, 166, 255], C2 = [95, 251, 241];
+      X.defs.insertAdjacentHTML('beforeend',
+        `<filter id="${id}s" x="-200%" y="-200%" width="500%" height="500%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.5" flood-color="#000" flood-opacity=".5"/></filter>` +
+        `<filter id="${id}g" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="4"/></filter>`);
+      const gTrack = svgEl('g', { fill: 'none', stroke: 'rgba(22,8,64,.24)', 'stroke-width': '8', 'stroke-linecap': 'round' }, X.svg);
+      const gFill = svgEl('g', { fill: 'none', 'stroke-width': '8', 'stroke-linecap': 'round' }, X.svg);
+      for (const e of E) { e.cv = sCurve(e.p.x, e.p.bottom + 7, e.c.x, e.c.y - 7); e.track = svgEl('path', { d: e.cv.d(), pathLength: '1' }, gTrack); }
+      const fills = new Map();
+      const glow = svgEl('circle', { r: '7', fill: rgb(C2), filter: `url(#${id}g)`, opacity: '0' }, X.svg);
+      const cap = svgEl('circle', { r: '4', filter: `url(#${id}s)`, opacity: '0' }, X.svg);
+      return {
+        play() {},
+        update(t) {
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2) { if (!e.done) { drawP(e.track, 1); clearBub(e.c.el); e.done = true; } continue; }
+            busy = true; drawP(e.track, spring(k, 0.45, 1)); popChild(e, k, 0.2, [0.45, 0.74], 0.84, -7);
+          }
+          const A = activeFor(P, t, 1);
+          if (!A.on) { if (fills.size) { fills.forEach(fl => fl.path.remove()); fills.clear(); } attr(cap, 'opacity', '0'); attr(glow, 'opacity', '0'); return busy; }
+          const fade = A.endK >= 0 ? 1 - clamp01(A.endK / 0.6) : 1;
+          let last = null;
+          for (const s of P.steps) {
+            const e = X.edgeMap.get(s.id); if (!e) continue;
+            let fl = fills.get(s.id);
+            if (!fl) {
+              const gid = uid('acg');
+              X.defs.insertAdjacentHTML('beforeend', `<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="${f(e.p.bottom + 7)}" x2="0" y2="${f(e.c.y - 7)}"><stop offset="0" stop-color="${rgb(C0)}"/><stop offset="1" stop-color="${rgb(C2)}"/></linearGradient>`);
+              fl = { path: svgEl('path', { d: e.cv.d(), pathLength: '1', stroke: `url(#${gid})` }, gFill) }; fills.set(s.id, fl);
+            }
+            const p = clamp01(spring(t - s.t, 0.8, 1));
+            drawP(fl.path, p); attr(fl.path, 'opacity', f(fade));
+            last = { e, p, s };
+          }
+          if (last) {
+            const q = last.e.cv.at(last.p);
+            attr(cap, 'cx', f(q.x)); attr(cap, 'cy', f(q.y)); attr(cap, 'fill', rgb(mixc(C0, C2, last.p))); attr(cap, 'opacity', f(fade));
+            attr(glow, 'cx', f(q.x)); attr(glow, 'cy', f(q.y)); attr(glow, 'opacity', f(fade * 0.85 * Math.sin(Math.PI * prog(t - last.s.t, 0.68, 0.7))));
+          } else { attr(cap, 'opacity', '0'); attr(glow, 'opacity', '0'); }
+          return true;
+        } };
+    } });
+
+  def({ id: 'intelligence', group: 2, arrive: 0.56, name: 'Intelligence', ambient: true,
+    desc: 'Light runs down each new line in Siri\u2019s orange, pink, purple and blue, then rings the reply as it lands.',
+    build(E, X) {
+      const gid = uid('ai'), STOPS = ['#FF9F45', '#FF5FA2', '#B46BFF', '#4E9BFF', '#33D6FF', '#FF9F45'], DUR = 0.62;
+      // one gradient running down the map: replies at the same depth always share the same colors
+      X.defs.insertAdjacentHTML('beforeend', `<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="200" spreadMethod="repeat">${STOPS.map((c, i) => `<stop offset="${f(i / (STOPS.length - 1))}" stop-color="${c}"/>`).join('')}</linearGradient>`);
+      const grad = X.defs.lastElementChild;
+      const gGlow = svgEl('g', { fill: 'none', stroke: `url(#${gid})`, 'stroke-width': '8', 'stroke-linecap': 'round' }, X.svg);
+      const gCore = svgEl('g', { fill: 'none', stroke: `url(#${gid})`, 'stroke-width': '2.4', 'stroke-linecap': 'round' }, X.svg);
+      const gHot = svgEl('g', { fill: 'none', stroke: '#fff', 'stroke-linecap': 'round' }, X.svg);
+      for (const e of E) {
+        e.d = sCurve(e.p.x, e.p.bottom + 2, e.c.x, e.c.y - 2).d();
+        e.glow = svgEl('path', { d: e.d, pathLength: '1', filter: `url(#${blurFilter(X.defs, edgeBox(e), 3.6)})`, opacity: '.48' }, gGlow);
+        e.core = svgEl('path', { d: e.d, pathLength: '1' }, gCore);
+      }
+      // a moment: light runs down one line, then a halo rings its reply. Used for new lines and Play a path.
+      const moments = [];
+      const moment = (e, t0) => {
+        const fid = blurFilter(X.defs, edgeBox(e), 3), c = e.c;
+        const m = { t0, hot: [svgEl('path', { d: e.d, pathLength: '1', 'stroke-width': '3.2', filter: `url(#${fid})`, visibility: 'hidden' }, gHot), svgEl('path', { d: e.d, pathLength: '1', 'stroke-width': '1.6', visibility: 'hidden' }, gHot)], halo: htmlEl('div', 'rl-halo', X.under) };
+        Object.assign(m.halo.style, { left: f(c.l - 5) + 'px', top: f(c.y - 5) + 'px', width: f(c.w + 10) + 'px', height: f(c.h + 10) + 'px' });
+        m.spin = htmlEl('div', 'rl-spin', m.halo);
+        moments.push(m);
+      };
+      let drift = -1;
+      return {
+        play(e, t0) { moment(e, t0); },
+        update(t) {
+          let busy = false;
+          if (!reduce.matches && t - drift > 1 / 30) { attr(grad, 'gradientTransform', `translate(0 ${f(((t / 5) % 1) * 200)})`); drift = t; }
+          for (const e of E) {
+            const k = t - e.born;
+            if (k > 2.4) { if (!e.done) { drawP(e.core, 1); drawP(e.glow, 1); attr(e.glow, 'opacity', '.48'); clearBub(e.c.el); e.done = true; } continue; }
+            busy = true;
+            if (k > 0 && !e.mom) { e.mom = true; moment(e, e.born); }
+            const p = easeInOut(prog(k, 0, DUR));
+            drawP(e.core, p); drawP(e.glow, p); attr(e.glow, 'opacity', f(0.48 + 0.4 * (1 - clamp01((k - DUR) / 0.8))));
+            popChild(e, k, DUR * 0.9, [0.45, 0.72], 0.84, -7);
+          }
+          for (let i = moments.length - 1; i >= 0; i--) {
+            const m = moments[i], k = t - m.t0;
+            if (k > DUR + 1.5) { m.hot.forEach(h => h.remove()); m.halo.remove(); moments.splice(i, 1); continue; }
+            const q = prog(k, 0, DUR), p = easeInOut(q), a = Math.max(0, p - 0.22), on = q <= 0 ? 0 : q < 1 ? 1 : 1 - clamp01((k - DUR) / 0.18);
+            m.hot.forEach(h => { attr(h, 'visibility', on > 0.01 ? 'visible' : 'hidden'); attr(h, 'stroke-dasharray', `${f4(Math.max(0.001, p - a))} 2`); attr(h, 'stroke-dashoffset', f4(-a)); attr(h, 'opacity', f(on)); });
+            const kh = k - DUR * 0.9;
+            css(m.halo, 'opacity', f(kh > 0 ? 0.95 * Math.sin(Math.PI * clamp01(kh / 1.3)) : 0));
+            css(m.spin, 'transform', `rotate(${f(Math.max(0, kh) * 120)}deg)`);
+            busy = true;
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'siri', group: 2, arrive: 0.56, name: 'Siri wave', ambient: true,
+    desc: 'Soft waves run along every line, taper to nothing at each end, and swell when a reply arrives.',
+    build(E, X) {
+      const g = svgEl('g', {}, X.svg), N = 40;
+      const COLS = ['rgba(255,70,160,.55)', 'rgba(60,220,255,.5)', 'rgba(90,110,255,.6)'], K = [1.5, 2.1, 2.7], SPD = [0.8, 1.15, 0.62], PH = [0, 2.1, 4.2];
+      for (const e of E) {
+        const c = sCurve(e.p.x, e.p.bottom + 3, e.c.x, e.c.y - 3);
+        e.pts = []; for (let j = 0; j <= N; j++) { const p = c.at(j / N), n = c.nrm(j / N); e.pts.push([p.x, p.y, n.x, n.y]); }
+        e.lens = COLS.map(col => svgEl('path', { fill: col, style: 'mix-blend-mode:screen' }, g));
+        e.mid = svgEl('path', { d: c.d(), class: 'rl-ln', fill: 'none', 'stroke-opacity': '.5', 'stroke-width': '1', pathLength: '1' }, g);
+        e.box = edgeBox(e, 30);
+      }
+      const bursts = X.mem.bursts || (X.mem.bursts = new Map());
+      return {
+        play(e, t0) { bursts.set(e.id, t0); },
+        update(t) {
+          const vis = X.visibleBox();
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born, entering = k < 2, kb = bursts.has(e.id) ? t - bursts.get(e.id) : 1e9;
+            if (entering || kb < 3) busy = true;
+            if (!entering && e.drawn && !hits(e.box, vis)) continue;      // off screen: leave it as it is
+            if (k <= 0) { e.lens.forEach(l => attr(l, 'd', '')); drawP(e.mid, 0); popChild(e, k, 0.56); continue; }
+            const p = entering ? easeOut(prog(k, 0, 0.7)) : 1;
+            drawP(e.mid, p);
+            const kk = Math.min(entering ? k : 1e9, kb), burst = kk < 0.25 ? kk / 0.25 : Math.exp(-(kk - 0.25) * 2.2), amp = 3.2 + 10 * burst;
+            e.lens.forEach((l, w) => {
+              let up = '', dn = '';
+              for (let j = 0; j <= N; j++) {
+                const s = j / N; if (s > p + 1e-6) break;
+                const env = Math.pow(Math.sin(Math.PI * (s / Math.max(p, 0.001))), 2);
+                const y = amp * env * Math.sin(2 * Math.PI * (K[w] * s - SPD[w] * t) + PH[w]);
+                const [px, py, nx, ny] = e.pts[j];
+                up += (j ? 'L' : 'M') + f(px + nx * y) + ' ' + f(py + ny * y);
+                dn = 'L' + f(px - nx * y) + ' ' + f(py - ny * y) + dn;
+              }
+              attr(l, 'd', up ? up + dn + 'Z' : '');
+            });
+            e.drawn = true;
+            if (entering) popChild(e, k, 0.56, [0.45, 0.72], 0.84, -7); else if (!e.done) { clearBub(e.c.el); e.done = true; }
+          }
+          return busy;
+        } };
+    } });
+
+  def({ id: 'ink', group: 2, arrive: 0.42, name: 'Invisible Ink', ambient: true,
+    desc: 'Sparkles drift down every line, and a reply that appears arrives covered in ink that clears to show the text.',
+    build(E, X) {
+      const M = X.mem;
+      // two canvases over the visible map: sparkles behind the bubbles, ink in front of them
+      if (!M.under) { M.under = htmlEl('canvas', 'rl-ink rl-ink-under', X.canvas); M.over = htmlEl('canvas', 'rl-ink rl-ink-over', X.canvas); }
+      for (const e of E) {
+        const c = sCurve(e.p.x, e.p.bottom + 3, e.c.x, e.c.y - 3), R = rng(hash(e.id));
+        e.lut = []; for (let j = 0; j <= 48; j++) { const p = c.at(j / 48), n = c.nrm(j / 48); e.lut.push([p.x, p.y, n.x, n.y]); }
+        e.parts = []; for (let j = 0; j < 36; j++) e.parts.push({ s0: R(), v: 0.16 + R() * 0.14, o: (R() + R() + R() - 1.5) * 2.1, r: 0.45 + R() * 0.85, fq: 1.2 + R() * 3, ph: R() * 6.28 });
+        e.head = []; for (let j = 0; j < 14; j++) e.head.push({ ds: R() * 0.09, o: (R() - 0.5) * 6, r: 0.6 + R() * 0.9, fq: 3 + R() * 5, ph: R() * 6.28 });
+        e.box = edgeBox(e, 30);
+      }
+      const bursts = M.bursts || (M.bursts = new Map()), covers = new Map();
+      const coverOf = b => {
+        let parts = covers.get(b.id);
+        if (!parts) {
+          const R = rng(hash(b.id) ^ 0x9e37), n = Math.min(260, Math.round(b.w * b.h / 55)); parts = [];
+          for (let j = 0; j < n; j++) {
+            let x, y; do { x = R() * b.w; y = R() * b.h; } while (!inRoundRect(x, y, b.w, b.h, 18));
+            const a = Math.atan2(y - b.h / 2, x - b.w / 2) + (R() - 0.5) * 1.2;
+            parts.push({ x: b.l + x, y: b.y + y, dx: Math.cos(a), dy: Math.sin(a), d: 6 + R() * 22, r: 0.5 + R() * 0.9, fq: 2 + R() * 4, ph: R() * 6.28 });
+          }
+          covers.set(b.id, parts);
+        }
+        return parts;
+      };
+      const dot = (g, x, y, r) => g.fillRect(x - r, y - r, r * 2, r * 2);
+      return {
+        destroy() { M.under.remove(); M.over.remove(); M.under = M.over = null; },
+        play(e, t0) { bursts.set(e.id, t0); },
+        update(t) {
+          const dpr = Math.min(2, devicePixelRatio || 1), W = X.canvas.clientWidth, H = X.canvas.clientHeight, v = X.liveView();
+          for (const cv of [M.under, M.over]) if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+          const gu = M.under.getContext('2d'), go = M.over.getContext('2d');
+          for (const g of [gu, go]) { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height); g.setTransform(dpr * v.zoom, 0, 0, dpr * v.zoom, dpr * v.panX, dpr * v.panY); }
+          const vis = X.visibleBox(v);
+          let busy = false;
+          for (const e of E) {
+            const k = t - e.born, entering = k < 2.2, kb = bursts.has(e.id) ? t - bursts.get(e.id) : -1;
+            if (entering || (kb >= 0 && kb < 1)) busy = true;
+            if (k <= 0) { popChild(e, k, 0.42); continue; }
+            if (!entering && !hits(e.box, vis)) { if (!e.done) { clearBub(e.c.el); css(e.c.el, 'color', ''); e.done = true; } continue; }
+            const front = entering ? clamp01(spring(k, 0.7, 1) * 1.02) : 1;
+            gu.fillStyle = '#fff';
+            for (const q of e.parts) {
+              const s = (q.s0 + q.v * t) % 1; if (s > front) continue;
+              const tw = 0.5 + 0.5 * Math.sin(q.fq * 6.283 * t + q.ph), a = (0.25 + 0.75 * tw * tw) * Math.min(1, s / 0.08, (1 - s) / 0.08) * 0.85;
+              if (a < 0.03) continue;
+              const L = e.lut[Math.round(s * 48)];
+              gu.globalAlpha = a; dot(gu, L[0] + L[2] * q.o, L[1] + L[3] * q.o, q.r);
+            }
+            const head = entering && front < 0.995 ? front : kb >= 0 && kb < 0.8 ? clamp01(spring(kb, 0.7, 1)) : -1;
+            if (head >= 0) for (const q of e.head) {
+              const s = head - q.ds; if (s < 0) continue;
+              const L = e.lut[Math.round(s * 48)], tw = 0.5 + 0.5 * Math.sin(q.fq * 6.283 * t + q.ph);
+              gu.globalAlpha = 0.4 + 0.6 * tw; dot(gu, L[0] + L[2] * q.o, L[1] + L[3] * q.o, q.r);
+            }
+            if (!entering) { if (!e.done) { clearBub(e.c.el); css(e.c.el, 'color', ''); e.done = true; } continue; }
+            const C = e.c;
+            if (e.quick) { popChild(e, k, 0); continue; }
+            const ps = popChild(e, k, 0.42, [0.45, 0.74], 0.84, -7), kk = k - 0.42;
+            if (kk <= 0) { textAlpha(C, 0); continue; }
+            const ev = easeOut(clamp01((kk - 0.4) / 0.75)), sc = 0.84 + 0.16 * ps, dy = (1 - ps) * -7;
+            textAlpha(C, easeInOut(clamp01((kk - 0.5) / 0.6)));
+            if (ev >= 1) continue;
+            go.fillStyle = C.from === 'me' ? '#fff' : '#3C3C43';
+            for (const q of coverOf(C)) {
+              const tw = 0.5 + 0.5 * Math.sin(q.fq * 6.283 * t + q.ph), a = (0.35 + 0.65 * tw) * (1 - ev) * clamp01(kk / 0.1);
+              if (a < 0.03) continue;
+              go.globalAlpha = a; dot(go, C.x + (q.x - C.x) * sc + q.dx * q.d * ev, C.y + (q.y - C.y) * sc + dy + q.dy * q.d * ev, q.r);
+            }
+          }
+          gu.globalAlpha = go.globalAlpha = 1;
+          return busy;
+        } };
+    } });
+
+  /* ======================================================================
+     Engine
+     ====================================================================== */
+  function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && byId[s.replyLines]) return s.replyLines; } catch (err) {} return DEFAULT; }
+  function store(id) { try { const s = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; s.replyLines = id; localStorage.setItem(KEY, JSON.stringify(s)); } catch (err) {} }
+
+  let style = byId[load()];
+  let inst = null, X = null, mem = {}, known = null, replay = false, raf = 0, timer = 0, changed = null, ptr = null, lastT = 0;
+  const born = new Map(), quick = new Map(), counts = new Map(), glints = [];
+  const P = { on: false, start: -1, end: -1, root: null, steps: [] };
+
+  // the blue a bubble shows right now: Messages shades by height in the map view
+  function tintColors(B, canvas) {
+    const cr = canvas.getBoundingClientRect(), top = cr.top + canvas.clientTop, H = canvas.clientHeight || 1;
+    for (const id in B) {
+      const b = B[id];
+      if (b.from === 'me') { const r = b.el.getBoundingClientRect(); b.rgb = mixc(BLUE_TOP, BLUE_BOT, clamp01((r.top + r.height / 2 - top) / H)); }
+      else b.rgb = GRAY;
+      b.color = rgb(b.rgb);
+    }
+  }
+
+  function draw(d) {
+    const t = nowS(), first = known === null;
+    const defs = svgEl('defs', {}, d.svg), B = {}, E = [], sib = {};
+    for (const n of d.nodes) {
+      const b = { id: n.id, x: n.x, y: n.y, w: n.w, h: n.h, from: n.from, el: n.el, node: n.node, depth: n.depth };
+      b.l = b.x - b.w / 2; b.bottom = b.y + b.h; b.cy = b.y + b.h / 2;
+      B[n.id] = b;
+    }
+    tintColors(B, d.canvas);
+    for (const [pid, cid] of d.edges) {
+      if (!B[pid] || !B[cid]) continue;
+      sib[pid] = (sib[pid] ?? -1) + 1;
+      E.push({ id: pid + '>' + cid, p: B[pid], c: B[cid], sib: sib[pid] });
+    }
+    // only lines that just appeared play an entrance; everything already on the map is drawn settled
+    if (!first && !reduce.matches) {
+      const fresh = replay ? E : E.filter(e => !known.has(e.id));
+      if (fresh.length) {
+        // each level starts once the level above has landed, squeezed so a deep map still fills in within ~2.4 s
+        const d0 = Math.min(...fresh.map(e => e.p.depth)), span = Math.max(...fresh.map(e => e.p.depth)) - d0;
+        const step = span > 0 ? Math.min(style.arrive + 0.08, 2.4 / span) : 0, order = {};
+        for (const e of fresh) {
+          const i = order[e.p.id] = (order[e.p.id] ?? -1) + 1;      // replies that appear together arrive one after another
+          born.set(e.id, t + (e.p.depth - d0) * step + (fresh.length > 1 ? Math.min(0.6, i * style.stagger) : 0));
+          quick.set(e.id, e.c.id === d.editing);                    // the user is typing into this reply
+        }
+      }
+    }
+    replay = false;
+    known = new Set(E.map(e => e.id));
+    for (const id of [...born.keys()]) if (!known.has(id) || t - born.get(id) > 20) { born.delete(id); quick.delete(id); }
+    for (const e of E) { e.born = born.has(e.id) ? born.get(e.id) : SETTLED; e.quick = !!quick.get(e.id); }
+    glints.length = 0;
+    X = { svg: d.svg, defs, under: d.under, over: d.over, overSvg: d.overSvg, canvas: d.canvas, world: d.world, view: d.view, fold: d.fold,
+      B, E, nodes: Object.values(B), edgeMap: new Map(E.map(e => [e.id, e])), t, dt: 0, P, mem, counts, first, kick, pointerWorld: ptr,
+      visibleBox(v) { v = v || d.view(); const c = d.canvas; return { x: -v.panX / v.zoom - 40, y: -v.panY / v.zoom - 40, w: c.clientWidth / v.zoom + 80, h: c.clientHeight / v.zoom + 80 }; },
+      // the map's transform as drawn right now, including the middle of a Play a path glide
+      liveView() {
+        const m = getComputedStyle(d.world).transform;
+        if (m && m !== 'none') { const n = (m.match(/-?\d*\.?\d+(?:e-?\d+)?/g) || []).map(Number); if (n.length >= 6) return { zoom: n[0], panX: n[4], panY: n[5] }; }
+        return d.view();
+      } };
+    document.body.dataset.replyLines = style.id;
+    inst = style.build(E, X) || {};
+    frame(t);                 // paint the first frame now, so nothing flashes before the loop starts
+    kick();
+  }
+
+  function frame(t) {
+    if (!inst || !X) return 0;
+    X.dt = Math.min(0.05, Math.max(0, t - (lastT || t))); lastT = t; X.t = t;
+    let fast = !!(inst.update && inst.update(t));
+    fast = runGlints(t) || fast;
+    if (P.on || (P.end > 0 && t - P.end < 1.4)) fast = true;
+    return fast ? 2 : style.ambient && !reduce.matches ? 1 : 0;
+  }
+  function tick() {
+    raf = 0;
+    const mode = frame(nowS());
+    if (mode === 2) raf = requestAnimationFrame(tick);
+    else if (mode === 1) timer = setTimeout(() => { timer = 0; kick(); }, 33);    // a style that drifts at rest idles at ~30 fps
+  }
+  function kick() { if (timer) { clearTimeout(timer); timer = 0; } if (!raf) raf = requestAnimationFrame(tick); }
+
+  // Play a path, for styles with no move of their own: a short glint runs down each line as it is played
+  function glint(e, t) {
+    const d = (inst.glintD && inst.glintD(e)) || sCurve(e.p.x, e.p.bottom, e.c.x, e.c.y).d();
+    const g = svgEl('g', { fill: 'none', stroke: '#fff', 'stroke-linecap': 'round' }, X.svg), fid = blurFilter(X.defs, edgeBox(e), 2.4);
+    glints.push({ t0: t, g, fid, els: [svgEl('path', { d, pathLength: '1', 'stroke-width': '5', 'stroke-opacity': '.55', filter: `url(#${fid})` }, g), svgEl('path', { d, pathLength: '1', 'stroke-width': '2' }, g)] });
+  }
+  function runGlints(t) {
+    for (let i = glints.length - 1; i >= 0; i--) {
+      const G = glints[i], k = t - G.t0;
+      if (k > 0.95) { G.g.remove(); const fl = document.getElementById(G.fid); if (fl) fl.remove(); glints.splice(i, 1); continue; }
+      const p = easeInOut(prog(k, 0, 0.55)), a = Math.max(0, p - 0.28), o = 1 - clamp01((k - 0.55) / 0.3);
+      for (const el of G.els) { attr(el, 'stroke-dasharray', `${f4(Math.max(0.001, p - a))} 2`); attr(el, 'stroke-dashoffset', f4(-a)); attr(el, 'opacity', f(o)); }
+    }
+    return glints.length > 0;
+  }
+
+  function playStart(rootId) { if (reduce.matches) return; P.on = true; P.start = nowS(); P.end = -1; P.root = rootId; P.steps = []; kick(); }
+  function playStep(pid, cid) {
+    if (!P.on || !X) return;
+    const t = nowS(), id = pid + '>' + cid;
+    P.steps.push({ id, from: pid, to: cid, t });
+    const e = X.edgeMap.get(id);
+    if (e) { if (inst.play) inst.play(e, t); else glint(e, t); }
+    kick();
+  }
+  function playEnd() { if (!P.on) return; P.on = false; P.end = nowS(); kick(); }
+
+  function pointer(ev) {
+    if (!X) return;
+    let p = null;
+    if (ev) {
+      const v = X.view(), r = X.canvas.getBoundingClientRect();
+      p = { x: (ev.clientX - r.left - X.canvas.clientLeft - v.panX) / v.zoom, y: (ev.clientY - r.top - X.canvas.clientTop - v.panY) / v.zoom, t: performance.now(), buttons: ev.buttons };
+    }
+    const prev = X.pointerWorld; X.pointerWorld = ptr = p;
+    if (inst && inst.pointer) { inst.pointer(p, prev); kick(); }
+  }
+  function retint() { if (X && inst && inst.retint) { tintColors(X.B, X.canvas); inst.retint(); } }
+
+  function setStyle(id) {
+    if (!byId[id]) return;
+    if (id !== style.id) { if (inst && inst.destroy) inst.destroy(); style = byId[id]; mem = {}; store(id); }
+    replayNow();
+  }
+  function replayNow() { replay = true; if (changed) changed(); }
+
+  /* ---------- Settings ---------- */
+  function settings(btn) {
+    const panel = htmlEl('div', 'rl-panel', document.body);
+    panel.id = 'rl-panel'; panel.hidden = true;
+    panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-labelledby', 'rl-title');
+    btn.setAttribute('aria-haspopup', 'dialog'); btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', panel.id);
+    let html = '<div class="rl-head"><h2 id="rl-title">Reply lines</h2><button type="button" data-act="replay">Replay</button><button type="button" data-act="done">Done</button></div>' +
+      '<p class="rl-note">How each reply connects to the message above it. Your choice is saved in this browser.</p>';
+    GROUPS.forEach((g, gi) => {
+      html += `<fieldset><legend>${g}</legend>`;
+      for (const s of STYLES) if (s.group === gi) html += `<label class="rl-opt"><input type="radio" name="rl-style" value="${s.id}"><span class="rl-name">${s.name}${s.id === DEFAULT ? '<span class="rl-tag">Default</span>' : ''}</span><span class="rl-desc">${s.desc}</span></label>`;
+      html += '</fieldset>';
+    });
+    panel.innerHTML = html;
+    const sync = () => panel.querySelectorAll('input').forEach(i => { i.checked = i.value === style.id; });
+    const place = () => {
+      const r = btn.getBoundingClientRect();
+      panel.style.top = Math.round(r.bottom + 8) + 'px';
+      panel.style.left = Math.round(Math.max(12, Math.min(r.left, innerWidth - panel.offsetWidth - 12))) + 'px';
+    };
+    const open = () => { sync(); panel.hidden = false; btn.setAttribute('aria-expanded', 'true'); place(); (panel.querySelector('input:checked') || panel.querySelector('input')).focus(); };   // focusing the current choice scrolls the panel to it
+    const close = refocus => { if (panel.hidden) return; panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (refocus) btn.focus(); };
+    btn.addEventListener('click', () => panel.hidden ? open() : close(true));
+    panel.addEventListener('change', ev => { if (ev.target.name === 'rl-style') setStyle(ev.target.value); });
+    panel.addEventListener('click', ev => { const a = ev.target.closest('[data-act]'); if (!a) return; if (a.dataset.act === 'replay') replayNow(); else close(true); });
+    // keys typed in the panel stay in the panel, so they never start a reply on the map
+    panel.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Escape') { ev.preventDefault(); close(true); } });
+    document.addEventListener('pointerdown', ev => { if (!panel.hidden && !panel.contains(ev.target) && !btn.contains(ev.target)) close(false); }, true);
+    addEventListener('resize', () => { if (!panel.hidden) place(); });
+  }
+
+  return { draw, retint, pointer, playStart, playStep, playEnd, settings, setStyle,
+    onChange(fn) { changed = fn; },
+    get style() { return style.id; },
+    styles: STYLES.map(s => ({ id: s.id, name: s.name, group: GROUPS[s.group] })) };
+})();
+</script>
 <script>
 (function(){
   // ---- constants ----
@@ -138,11 +1295,13 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
     var s = 0; n.children.forEach(function(c){ s += measure(c); });
     return Math.max(SLOT, s);
   }
+  var hcache = {}, ROW_GAP = ROW - 41;   // measured bubble heights; the room a one-line bubble leaves below it
   function layout(){
-    var pos = {}, maxD = 0;
+    var pos = {}, maxD = 0, rowH = [];
     function place(n, left, d){
       var w = measure(n);
-      pos[n.id] = {x: left + w/2, y: d*ROW};
+      pos[n.id] = {x: left + w/2, y: 0, d: d};
+      rowH[d] = Math.max(rowH[d] || 0, hcache[n.id] || 41);
       if (d > maxD) maxD = d;
       if (!n.collapsed){
         var cur = left;
@@ -152,7 +1311,11 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
     }
     var W = measure(state.root);
     place(state.root, 0, 0);
-    return {pos:pos, W:W, H:(maxD+1)*ROW + 80};
+    // A row is ROW tall, or taller when a long message needs it, so the space between messages never shrinks.
+    var top = [0];
+    for (var d = 1; d <= maxD; d++) top[d] = top[d-1] + Math.max(ROW, rowH[d-1] + ROW_GAP);
+    for (var id in pos) pos[id].y = top[pos[id].d];
+    return {pos:pos, W:W, H: top[maxD] + Math.max(ROW, rowH[maxD] + ROW_GAP) + 80};
   }
 
   // ---- editing actions ----
@@ -260,6 +1423,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
       b.style.setProperty('--gy', gy + 'px');
       b.style.setProperty('--gy2', (gy - (at[i][1] + TAIL_BELOW - TAIL_H)) + 'px');
     });
+    ReplyLines.retint();
   }
   var tintUntil = 0;
   function tintFor(ms){        // keep shading in step with an animated move
@@ -271,34 +1435,31 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
   function render(){
     var L = layout();
     var w = $('#world'); w.innerHTML = '';
+    // layers, back to front: lines, line extras (halos, reply counts), messages, line extras on top
+    var svg = document.createElementNS(NS, 'svg'); svg.setAttribute('class', 'links');
+    var under = document.createElement('div'); under.className = 'link-layer';
+    w.appendChild(svg); w.appendChild(under);
+    var items = [], pairs = [];
+    (function walk(n, d){
+      var el = nodeEl(n, L.pos[n.id]);
+      w.appendChild(el);
+      items.push({n: n, el: el, b: el.querySelector('.bubble'), d: d});
+      if (!n.collapsed) n.children.forEach(function(c){ pairs.push([n.id, c.id]); walk(c, d + 1); });
+    })(state.root, 0);
+    var overSvg = document.createElementNS(NS, 'svg'); overSvg.setAttribute('class', 'links');
+    var over = document.createElement('div'); over.className = 'link-layer';
+    w.appendChild(overSvg); w.appendChild(over);
+    // a row grows to fit its tallest message, so the room for reply lines never shrinks
+    var grew = false;
+    items.forEach(function(it){ var h = it.b.offsetHeight; if (hcache[it.n.id] !== h){ hcache[it.n.id] = h; grew = true; } });
+    if (grew){ L = layout(); items.forEach(function(it){ it.el.style.top = L.pos[it.n.id].y + 'px'; }); }
     w.style.width = L.W + 'px'; w.style.height = L.H + 'px';
-    var svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('class', 'links'); svg.setAttribute('width', L.W); svg.setAttribute('height', L.H);
-    svg.innerHTML = '<defs><filter id="dotglow" x="-300%" y="-300%" width="700%" height="700%">' +
-      '<feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
-    w.appendChild(svg);
-    var pairs = [];
-    (function walk(n){
-      w.appendChild(nodeEl(n, L.pos[n.id]));
-      if (!n.collapsed) n.children.forEach(function(c){ pairs.push([n, c]); walk(c); });
-    })(state.root);
-    pairs.forEach(function(pr){
-      var pp = L.pos[pr[0].id], cp = L.pos[pr[1].id];
-      var bh = w.querySelector('.node[data-id="'+pr[0].id+'"] .bubble').offsetHeight;
-      var y1 = pp.y + bh, y2 = cp.y, my = (y1+y2)/2;
-      var d = 'M'+pp.x+' '+y1+' C'+pp.x+' '+my+' '+cp.x+' '+my+' '+cp.x+' '+y2;
-      // The path is only the route for the dots; it is not drawn.
-      var path = document.createElementNS(NS, 'path');
-      path.setAttribute('d', d); path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'none');
-      svg.appendChild(path);
-      // Three white neon dots travel from message to reply and pulse as they go.
-      [0, 0.15, 0.3].forEach(function(begin){
-        var dot = document.createElementNS(NS, 'circle');
-        dot.setAttribute('r', '3.6'); dot.setAttribute('fill', '#FFFFFF'); dot.setAttribute('filter', 'url(#dotglow)');
-        dot.appendChild(svgEl('animateMotion', {dur: '0.45s', begin: begin + 's', repeatCount: 'indefinite', path: d, calcMode: 'linear'}));
-        dot.appendChild(svgEl('animate', {attributeName: 'r', values: '2.2;5;2.2', dur: '0.22s', begin: begin + 's', repeatCount: 'indefinite'}));
-        svg.appendChild(dot);
-      });
+    [svg, overSvg].forEach(function(s){ s.setAttribute('width', L.W); s.setAttribute('height', L.H); });
+    ReplyLines.draw({
+      svg: svg, under: under, overSvg: overSvg, over: over, canvas: canvasEl(), world: w, editing: editing, edges: pairs,
+      nodes: items.map(function(it){ var p = L.pos[it.n.id]; return {id: it.n.id, x: p.x, y: p.y, w: it.b.offsetWidth, h: it.b.offsetHeight, from: it.n.from, el: it.b, node: it.el, depth: it.d}; }),
+      view: function(){ return {zoom: zoom, panX: panX, panY: panY}; },
+      fold: function(id){ var f = find(id); if (f && f.node.children.length){ f.node.collapsed = true; save(); render(); } }
     });
     applyView();
     showArm();
@@ -350,6 +1511,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
     playTimers.forEach(clearTimeout); playTimers = [];
     document.querySelectorAll('.node.hl').forEach(function(e){ e.classList.remove('hl'); });
     $('#world').classList.remove('anim');
+    ReplyLines.playEnd();
   }
   function playRandom(){
     stopPlay();
@@ -362,6 +1524,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
         $('#world').classList.add('anim');
         centerOn(n.id);
         tintFor(900);
+        if (i === 0) ReplyLines.playStart(n.id); else ReplyLines.playStep(path[i-1].id, n.id);
       }, i*1000));
     });
     playTimers.push(setTimeout(stopPlay, path.length*1000 + 1200));
@@ -391,6 +1554,8 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('pointermove', function(e){ ReplyLines.pointer(e); });
+  canvas.addEventListener('pointerleave', function(){ ReplyLines.pointer(null); });
   // Ctrl/Cmd + scroll (or trackpad pinch) zooms at the pointer; plain scroll pans like a map.
   canvas.addEventListener('wheel', function(e){
     e.preventDefault();
@@ -484,6 +1649,8 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
     return {font: fam, size: fs, spacing: ls, inset: pad, top: pt};
   }
 
+  ReplyLines.onChange(function(){ render(); });
+  ReplyLines.settings($('#settings'));
   window.addEventListener('resize', tint);
   calibrate();
   render();
