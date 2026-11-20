@@ -5,7 +5,8 @@ Brainstorm is a message-mapping tool. Write the message you plan to send, then b
 - Double-click a bubble to edit it.
 - Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it.
 - Drag empty space to pan. Ctrl/Cmd + scroll to zoom.
-- Play a path walks the map from your first message, picking one reply at random at every branch. Each reply at a branch has the same chance, and the path is lit only while it plays.
+- Ctrl + click empty space (or Cmd + click on a Mac) to start a new flowchart. The picker opens as you press: slide to Received (gray) or Sent (blue) and let go, or let go first and click one. R and S choose too, and Esc closes it.
+- Play a path walks the flowchart you have selected (or any one of them, each with the same chance), picking one reply at random at every branch. Each reply at a branch has the same chance, and the path is lit only while it plays.
 - Your map is saved in your browser.
 
 ## Reply lines
@@ -31,6 +32,12 @@ A line animates only when it appears or while Play a path walks it. Lines alread
 | Intelligence (default) | Light in Siri's colors runs down each new line and rings the reply. |
 | Siri wave | Soft waves along every line that swell when a reply arrives. |
 | Invisible Ink | Sparkles drift down every line; new replies arrive covered in ink. |
+
+## Pointer and flowcharts
+
+Over empty canvas the pointer is an arrow with a small move badge, so dragging pans; while you pan, the badge looks pressed. Hold Ctrl (Cmd on a Mac) and the badge becomes a gray and blue bubble with a plus, meaning a press there starts a new message. These are native cursor images, drawn at 1x and 2x, so they never lag behind the mouse.
+
+A map can hold several flowcharts. A new one starts where you pressed, and its first message is ready to type into. A flowchart's first message can be deleted, taking its flowchart with it, as long as another flowchart is left. Maps saved before flowcharts open exactly where they were.
 
 ## Bubbles
 

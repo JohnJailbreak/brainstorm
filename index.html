@@ -145,6 +145,22 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 .rl-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(2,138,254,.14);color:#0068d6;font-size:11px;font-weight:600;vertical-align:1px}
 .t2 .rl-tag,.t5 .rl-tag,.t7 .rl-tag{background:rgba(255,255,255,.2);color:#fff}
 .armhint{position:absolute;left:12px;bottom:12px;font-size:13px;padding:5px 10px;border-radius:999px;background:#028AFE;color:#fff;pointer-events:none}
+/* ---- the pointer and the new-message picker ---- */
+:root{--np-spring:cubic-bezier(.34,1.45,.55,1)}
+.np{position:absolute;z-index:6;display:flex;gap:8px;transform:translate(-50%,calc(-100% - 14px)) scale(.7);transform-origin:50% 100%;opacity:0;transition:opacity .16s ease,transform .44s var(--np-spring)}
+.np.on{opacity:1;transform:translate(-50%,calc(-100% - 14px))}
+.np.below{transform:translate(-50%,14px) scale(.7);transform-origin:50% 0}
+.np.below.on{transform:translate(-50%,14px)}
+.np.out{opacity:0;transition:opacity .14s ease}
+.np-chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 11px 0 13px;border:0;border-radius:15px;font:600 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",sans-serif;letter-spacing:-.01em;white-space:nowrap;cursor:inherit;box-shadow:0 4px 12px rgba(20,10,60,.25);transition:transform .3s var(--np-spring),box-shadow .18s,opacity .2s}
+.np-chip.them{background:#E9E8EB;color:#1D1D1F}
+.np-chip.me{background:linear-gradient(rgb(52 168 252),rgb(10 132 254));color:#fff}
+.np-chip kbd{padding:2px 5px;border-radius:4px;background:rgba(0,0,0,.1);font:600 10px/1 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif}
+.np-chip.me kbd{background:rgba(255,255,255,.25)}
+.np-chip.hot{transform:scale(1.07);box-shadow:0 0 0 2px #fff,0 4px 12px rgba(20,10,60,.3)}
+.np.has-hot .np-chip:not(.hot){opacity:.62}
+.bubble.pop{animation:npPop .45s var(--np-spring) both}
+@keyframes npPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 </style></head>
 <body class="t7"><main class="page">
 <h1>Brainstorm</h1>
@@ -152,7 +168,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 <button id="play">Play a path</button><button id="fit">Fit</button><button id="center">Center selected</button><button id="expand">Expand all</button><button id="collapse">Collapse all</button><button id="reset">Reset map</button><button id="settings">Settings</button>
 </div><div class="zoombar"><button id="zout">−</button><input id="zs" type="range" min="40" max="200" value="100"><button id="zin">+</button><span id="zl">100%</span></div></div>
 <div id="canvas"><div id="world"></div></div>
-<p class="hint">Double-click a bubble to edit it. Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it. Press Reply to add manually, Delete to remove. Drag empty space to pan. Scroll to pan, Ctrl + scroll to zoom.</p>
+<p class="hint">Double-click a bubble to edit it. Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it. Press Reply to add manually, Delete to remove. Drag empty space to pan. Ctrl + click empty space to start a new message. Scroll to pan, Ctrl + scroll to zoom.</p>
 </main>
 <script>window.PAGE_SEED="Can you send me the photos?";</script>
 <script>
@@ -1275,15 +1291,22 @@ window.ReplyLines = (() => {
   function starter(){
     // A single editable starting point. Edit it, delete it, or replace it.
     var r = mk(window.PAGE_SEED || 'Message you are planning to send', 'me');
+    r.at = {x: SLOT/2, y: 0};
     return r;
   }
+  // A map can hold several flowcharts. "at" is where each one's first message sits: the top center of its bubble.
   var state = null;
-  try { var saved = JSON.parse(localStorage.getItem(PAGE_KEY)); if (saved && saved.root){ bumpIds(saved.root); state = saved; } } catch(e){}
-  if (!state) state = {root: starter()};
+  try {
+    var saved = JSON.parse(localStorage.getItem(PAGE_KEY));
+    if (saved && saved.root && !saved.roots){ saved.root.at = {x: measure(saved.root)/2, y: 0}; saved = {roots: [saved.root]}; }   // maps saved before flowcharts stay where they were
+    if (saved && saved.roots && saved.roots.length){ saved.roots.forEach(function(r){ bumpIds(r); if (!r.at) r.at = {x: SLOT/2, y: 0}; }); state = saved; }
+  } catch(e){}
+  if (!state) state = {roots: [starter()]};
+  function isRoot(n){ return state.roots.indexOf(n) >= 0; }
   function save(){ try { localStorage.setItem(PAGE_KEY, JSON.stringify(state)); } catch(e){} }
 
   function find(id, n, parent){
-    n = n || state.root;
+    if (!n){ for (var k = 0; k < state.roots.length; k++){ var hit = find(id, state.roots[k], null); if (hit) return hit; } return null; }
     if (n.id === id) return {node:n, parent:parent||null};
     for (var i=0;i<n.children.length;i++){ var r = find(id, n.children[i], n); if (r) return r; }
     return null;
@@ -1297,25 +1320,31 @@ window.ReplyLines = (() => {
   }
   var hcache = {}, ROW_GAP = ROW - 41;   // measured bubble heights; the room a one-line bubble leaves below it
   function layout(){
-    var pos = {}, maxD = 0, rowH = [];
-    function place(n, left, d){
-      var w = measure(n);
-      pos[n.id] = {x: left + w/2, y: 0, d: d};
-      rowH[d] = Math.max(rowH[d] || 0, hcache[n.id] || 41);
-      if (d > maxD) maxD = d;
-      if (!n.collapsed){
-        var cur = left;
-        n.children.forEach(function(c){ var cw = measure(c); place(c, cur, d+1); cur += cw; });
+    var pos = {}, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    state.roots.forEach(function(root){
+      var mine = {}, maxD = 0, rowH = [];
+      function place(n, left, d){
+        var w = measure(n);
+        mine[n.id] = {x: left + w/2, y: 0, d: d};
+        rowH[d] = Math.max(rowH[d] || 0, hcache[n.id] || 41);
+        if (d > maxD) maxD = d;
+        if (!n.collapsed){
+          var cur = left;
+          n.children.forEach(function(c){ var cw = measure(c); place(c, cur, d+1); cur += cw; });
+        }
+        return w;
       }
-      return w;
-    }
-    var W = measure(state.root);
-    place(state.root, 0, 0);
-    // A row is ROW tall, or taller when a long message needs it, so the space between messages never shrinks.
-    var top = [0];
-    for (var d = 1; d <= maxD; d++) top[d] = top[d-1] + Math.max(ROW, rowH[d-1] + ROW_GAP);
-    for (var id in pos) pos[id].y = top[pos[id].d];
-    return {pos:pos, W:W, H: top[maxD] + Math.max(ROW, rowH[maxD] + ROW_GAP) + 80};
+      place(root, root.at.x - measure(root)/2, 0);      // each flowchart is centered on its first message
+      // A row is ROW tall, or taller when a long message needs it, so the space between messages never shrinks.
+      var top = [0];
+      for (var d = 1; d <= maxD; d++) top[d] = top[d-1] + Math.max(ROW, rowH[d-1] + ROW_GAP);
+      for (var id in mine){
+        var p = mine[id]; p.y = root.at.y + top[p.d]; pos[id] = p;
+        minX = Math.min(minX, p.x - SLOT/2); maxX = Math.max(maxX, p.x + SLOT/2); minY = Math.min(minY, p.y);
+      }
+      maxY = Math.max(maxY, root.at.y + top[maxD] + Math.max(ROW, rowH[maxD] + ROW_GAP));
+    });
+    return {pos:pos, W:Math.max(1, maxX), H:Math.max(1, maxY + 80), minX:minX, minY:minY, bw:maxX - minX, bh:maxY + 80 - minY};
   }
 
   // ---- editing actions ----
@@ -1340,7 +1369,12 @@ window.ReplyLines = (() => {
     selected = c.id; editing = c.id; save(); render(); focusEdit(c.id, !!typed);
   }
   function remove(n){
-    var f = find(n.id); if (!f || !f.parent) return;   // the starting message is not deletable
+    var f = find(n.id); if (!f) return;
+    if (!f.parent){
+      // a flowchart's first message goes with its whole flowchart, as long as another flowchart is left
+      if (state.roots.length < 2) return;
+      state.roots.splice(state.roots.indexOf(n), 1); selected = null; editing = null; save(); render(); return;
+    }
     var i = f.parent.children.indexOf(n);
     f.parent.children.splice(i, 1);
     selected = f.parent.id; editing = null; save(); render();
@@ -1356,7 +1390,7 @@ window.ReplyLines = (() => {
     btn('Reply', function(){ reply(n); });
     btn('Edit', function(){ startEdit(n.id); });
     if (n.children.length) btn(n.collapsed ? 'Unfold' : 'Fold', function(){ n.collapsed = !n.collapsed; save(); render(); });
-    if (n !== state.root) btn('Delete', function(){ remove(n); });
+    if (!isRoot(n) || state.roots.length > 1) btn('Delete', function(){ remove(n); });
     return t;
   }
   function nodeEl(n, p){
@@ -1440,12 +1474,13 @@ window.ReplyLines = (() => {
     var under = document.createElement('div'); under.className = 'link-layer';
     w.appendChild(svg); w.appendChild(under);
     var items = [], pairs = [];
-    (function walk(n, d){
+    function walk(n, d){
       var el = nodeEl(n, L.pos[n.id]);
       w.appendChild(el);
       items.push({n: n, el: el, b: el.querySelector('.bubble'), d: d});
       if (!n.collapsed) n.children.forEach(function(c){ pairs.push([n.id, c.id]); walk(c, d + 1); });
-    })(state.root, 0);
+    }
+    state.roots.forEach(function(r){ walk(r, 0); });
     var overSvg = document.createElementNS(NS, 'svg'); overSvg.setAttribute('class', 'links');
     var over = document.createElement('div'); over.className = 'link-layer';
     w.appendChild(overSvg); w.appendChild(over);
@@ -1487,8 +1522,8 @@ window.ReplyLines = (() => {
   function viewCenter(){ var c = canvasEl(); return {x:c.clientWidth/2, y:c.clientHeight/2}; }
   function fit(){
     var L = layout(), c = canvasEl();
-    zoom = clamp(Math.min((c.clientWidth-60)/L.W, (c.clientHeight-60)/L.H, 1.2), 0.4, 2);
-    panX = (c.clientWidth - L.W*zoom)/2; panY = 30;
+    zoom = clamp(Math.min((c.clientWidth-60)/L.bw, (c.clientHeight-60)/L.bh, 1.2), 0.4, 2);
+    panX = (c.clientWidth - L.bw*zoom)/2 - L.minX*zoom; panY = 30 - L.minY*zoom;
     applyView();
   }
   function centerOn(id){
@@ -1499,8 +1534,11 @@ window.ReplyLines = (() => {
   }
 
   // ---- playback: walks a random path through the user's own messages ----
+  function rootOf(id){ for (var k = 0; k < state.roots.length; k++){ if (find(id, state.roots[k], null)) return state.roots[k]; } return null; }
   function randomPath(){
-    var path = [state.root], n = state.root;
+    // the flowchart you have selected, or else any one of them, each with the same chance
+    var start = (selected && rootOf(selected)) || state.roots[Math.floor(Math.random()*state.roots.length)];
+    var path = [start], n = start;
     while (!n.collapsed && n.children.length){
       n = n.children[Math.floor(Math.random()*n.children.length)];
       path.push(n);
@@ -1533,11 +1571,14 @@ window.ReplyLines = (() => {
   // ---- pointer: drag empty space to pan, click empty space to deselect ----
   var canvas = canvasEl();
   canvas.addEventListener('pointerdown', function(e){
+    if (Pick.el && e.target.closest('.np')){ e.preventDefault(); return; }    // a click on the open picker chooses on release
     if (e.target.closest('.node,.tb,button,input')) return;
+    if (Pick.el){ Pick.close(); return; }                                    // a press outside an open picker just closes it
+    if ((e.ctrlKey || e.metaKey) && e.button !== 1){ e.preventDefault(); stopPlay(); Pick.open(e); return; }   // Ctrl or Cmd + press: a new message
     stopPlay();
     drag = {x:e.clientX, y:e.clientY, px:panX, py:panY, moved:0};
     canvas.setPointerCapture(e.pointerId);
-    canvas.classList.add('grabbing');
+    canvas.classList.add('grabbing'); applyCursor();
   });
   canvas.addEventListener('pointermove', function(e){
     if (!drag) return;
@@ -1549,13 +1590,124 @@ window.ReplyLines = (() => {
   function endDrag(){
     if (!drag) return;
     var wasClick = drag.moved < 4;
-    drag = null; canvas.classList.remove('grabbing');
+    drag = null; canvas.classList.remove('grabbing'); applyCursor();
     if (wasClick && (selected || editing)){ editing = null; selected = null; render(); }
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
   canvas.addEventListener('pointermove', function(e){ ReplyLines.pointer(e); });
   canvas.addEventListener('pointerleave', function(){ ReplyLines.pointer(null); });
+
+  // ---- the pointer: an arrow with a badge. It pans by default; hold Ctrl (or Cmd) and a press starts a new message ----
+  var CUR = {}, curState = '', mod = false;
+  (function(){
+    function bub(w, h){   // a small message bubble, centered, tail at the bottom left
+      var r = Math.min(h/2, 7), x0 = -w/2, y0 = -h/2, x1 = w/2, y1 = h/2, tx = -(w/2 - r*0.55), f = function(v){ return Math.round(v*100)/100; };
+      return 'M'+f(x0+r)+' '+f(y0)+'H'+f(x1-r)+'A'+r+' '+r+' 0 0 1 '+f(x1)+' '+f(y0+r)+'V'+f(y1-r)+'A'+r+' '+r+' 0 0 1 '+f(x1-r)+' '+f(y1)+'H'+f(x0+r)+'A'+r+' '+r+' 0 0 1 '+f(x0)+' '+f(y1-r)+'V'+f(y0+r)+'A'+r+' '+r+' 0 0 1 '+f(x0+r)+' '+f(y0)+'Z' +
+        'M'+f(tx+2.6)+' '+f(y1-1.2)+'C'+f(tx-0.6)+' '+f(y1+0.4)+' '+f(tx-2.4)+' '+f(y1+1.6)+' '+f(tx-4.4)+' '+f(y1+2.4)+'C'+f(tx-2.8)+' '+f(y1+0.2)+' '+f(tx-1.8)+' '+f(y1-2)+' '+f(tx-1.6)+' '+f(y1-3.6)+'Z';
+    }
+    var EDGE = 'stroke="rgba(28,18,70,.62)" stroke-width="2.4" paint-order="stroke" stroke-linejoin="round"';
+    var ARROW = '<path d="M2 2L2 18.7L6.1 14.9L9 21.3L11.8 20.1L9 13.9L14.5 13.9Z" fill="#fff" '+EDGE+'/>';
+    var MOVE = '<path d="M0-4.4V4.4M-4.4 0H4.4M-1.7-2.7 0-4.4 1.7-2.7M-1.7 2.7 0 4.4 1.7 2.7M-2.7-1.7-4.4 0-2.7 1.7M2.7-1.7 4.4 0 2.7 1.7" fill="none" stroke="#5E5A78" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>';
+    var badge = function(fill, k){ return '<g transform="translate(15 19)"><circle r="7.4" fill="'+fill+'" '+EDGE+'/><g transform="scale('+k+')">'+MOVE+'</g></g>'; };
+    var NEW = '<g transform="translate(15 19)"><path d="'+bub(17, 13)+'" fill="url(#g)" '+EDGE+'/><path d="M-2.8 0H2.8M0-2.8V2.8" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><path d="M-2.8 0H2.8M0-2.8V2.8" stroke="#1D1D1F" stroke-width="1.7" stroke-linecap="round"/></g>';
+    var wrap = function(body){ return '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><defs><filter id="s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1" stdDeviation=".8" flood-color="#140a3c" flood-opacity=".4"/></filter><linearGradient id="g" x1="0" x2="1"><stop offset=".5" stop-color="#E9E8EB"/><stop offset=".5" stop-color="#1C9AFE"/></linearGradient></defs><g filter="url(#s)">'+body+'</g></svg>'; };
+    var SVG = {idle: wrap(ARROW + badge('#fff', 1)), grab: wrap(ARROW + badge('#DCDAE6', .84)), create: wrap(ARROW + NEW), menu: wrap(ARROW)};
+    var FALLBACK = {idle: 'grab', grab: 'grabbing', create: 'copy', menu: 'default'};
+    var uri = function(t){ return 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t) + '")'; };
+    Object.keys(SVG).forEach(function(k){ CUR[k] = uri(SVG[k]) + ' 2 2, ' + FALLBACK[k]; });
+    // Native cursors never lag. Drawing each one at 1x and 2x keeps it sharp on high-density screens.
+    function raster(t, scale){ return new Promise(function(done){
+      var img = new Image();
+      img.onload = function(){ try { var c = document.createElement('canvas'); c.width = c.height = 32*scale; c.getContext('2d').drawImage(img, 0, 0, 32*scale, 32*scale); done(c.toDataURL('image/png')); } catch(err){ done(null); } };
+      img.onerror = function(){ done(null); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t);
+    }); }
+    Object.keys(SVG).forEach(function(k){
+      Promise.all([raster(SVG[k], 1), raster(SVG[k], 2)]).then(function(png){
+        if (!png[0] || !png[1]) return;
+        var v = '-webkit-image-set(url("' + png[0] + '") 1x, url("' + png[1] + '") 2x) 2 2, ' + uri(SVG[k]) + ' 2 2, ' + FALLBACK[k];
+        if (window.CSS && CSS.supports('cursor', v)){ CUR[k] = v; applyCursor(true); }
+      });
+    });
+    if (window.CSS && CSS.supports('transition-timing-function', 'linear(0, 1)')){   // a real spring for the picker
+      var z = 0.7, w = 2*Math.PI/0.5, wd = w*Math.sqrt(1 - z*z), T = 4.2/(z*w), pts = [];
+      for (var i = 0; i <= 40; i++){ var t = T*i/40; pts.push((1 - Math.exp(-z*w*t)*(Math.cos(wd*t) + (z*w/wd)*Math.sin(wd*t))).toFixed(4)); }
+      pts[40] = '1'; document.documentElement.style.setProperty('--np-spring', 'linear(' + pts.join(',') + ')');
+    }
+  })();
+  // the pointer shows what a press on empty space would do right now
+  function applyCursor(force){
+    var st = Pick.el ? 'menu' : drag ? 'grab' : mod ? 'create' : 'idle';
+    if (st === curState && !force) return;
+    curState = st; canvas.style.cursor = CUR[st];
+    if (Pick.el) Pick.el.style.cursor = CUR.menu;
+  }
+  function setMod(on){ if (mod === on) return; mod = on; applyCursor(); }
+  window.addEventListener('keyup', function(e){ if (e.key === 'Control' || e.key === 'Meta') setMod(false); }, true);
+  window.addEventListener('blur', function(){ setMod(false); });
+  canvas.addEventListener('pointermove', function(e){ setMod(e.ctrlKey || e.metaKey); if (Pick.el) Pick.hover(e); });
+  canvas.addEventListener('pointerup', function(e){ if (Pick.el) Pick.up(e); });
+  canvas.addEventListener('contextmenu', function(e){ if (e.ctrlKey || Pick.el) e.preventDefault(); });   // on a Mac, Ctrl-click is a right-click
+  canvas.addEventListener('wheel', function(){ if (Pick.el) Pick.close(); }, {passive: true});
+  // The picker opens on the press, like a native menu. Slide to a color and let go, or let go first and click one.
+  var Pick = {el: null, at: null, held: null, hot: null,
+    open: function(e){
+      var r = canvas.getBoundingClientRect(), x = e.clientX - r.left - canvas.clientLeft, y = e.clientY - r.top - canvas.clientTop;
+      Pick.close(true);
+      var el = document.createElement('div');
+      el.className = 'np' + (y < 64 ? ' below' : ''); el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'New message');
+      el.innerHTML = '<button type="button" class="np-chip them" role="menuitem" data-kind="them">Received <kbd>R</kbd></button><button type="button" class="np-chip me" role="menuitem" data-kind="me">Sent <kbd>S</kbd></button>';
+      el.style.left = clamp(x, 110, canvas.clientWidth - 110) + 'px'; el.style.top = y + 'px';
+      canvas.appendChild(el);
+      Pick.el = el; Pick.at = {x: x, y: y}; Pick.hot = null;
+      Pick.held = {x: e.clientX, y: e.clientY, t: performance.now(), far: false};
+      try { canvas.setPointerCapture(e.pointerId); } catch(err){}
+      el.getBoundingClientRect(); requestAnimationFrame(function(){ if (Pick.el === el) el.classList.add('on'); });
+      applyCursor();
+    },
+    kindAt: function(cx, cy){
+      if (!Pick.el) return null;
+      var bs = Pick.el.querySelectorAll('.np-chip');
+      for (var i = 0; i < bs.length; i++){ var b = bs[i].getBoundingClientRect(); if (cx >= b.left - 4 && cx <= b.right + 4 && cy >= b.top - 4 && cy <= b.bottom + 6) return bs[i].getAttribute('data-kind'); }
+      return null;
+    },
+    hover: function(e){
+      if (Pick.held && Math.abs(e.clientX - Pick.held.x) + Math.abs(e.clientY - Pick.held.y) > 8) Pick.held.far = true;
+      var k = Pick.kindAt(e.clientX, e.clientY); if (k === Pick.hot) return;
+      Pick.hot = k; Pick.el.classList.toggle('has-hot', !!k);
+      Pick.el.querySelectorAll('.np-chip').forEach(function(b){ b.classList.toggle('hot', b.getAttribute('data-kind') === k); });
+    },
+    up: function(e){
+      var k = Pick.kindAt(e.clientX, e.clientY), h = Pick.held; Pick.held = null;
+      if (h && !h.far){ if (!k && performance.now() - h.t > 600) Pick.close(); return; }   // a quick click leaves it open
+      if (k) Pick.choose(k); else Pick.close();
+    },
+    choose: function(kind){
+      var at = Pick.at; Pick.close();
+      // the new message starts its own flowchart where you pressed, and is ready to type into
+      var r = mk('New message', kind); r.at = {x: (at.x - panX)/zoom, y: (at.y - panY)/zoom - 20};
+      state.roots.push(r); selected = r.id; editing = r.id; save(); render();
+      var b = document.querySelector('.node[data-id="' + r.id + '"] .bubble'); if (b) b.classList.add('pop');
+      focusEdit(r.id, false);
+    },
+    close: function(instant){
+      var el = Pick.el; if (!el) return;
+      Pick.el = null; Pick.held = null; Pick.hot = null;
+      if (instant) el.remove(); else { el.classList.remove('on'); el.classList.add('out'); setTimeout(function(){ el.remove(); }, 200); }
+      applyCursor();
+    }};
+  // R and S choose, Esc closes; these come before typing-to-reply
+  window.addEventListener('keydown', function(e){
+    if (e.key === 'Control' || e.key === 'Meta'){ setMod(true); return; }
+    if (!Pick.el || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Escape') Pick.close();
+    else if (e.key === 'r' || e.key === 'R') Pick.choose('them');
+    else if (e.key === 's' || e.key === 'S') Pick.choose('me');
+    else return;
+    e.preventDefault(); e.stopImmediatePropagation();
+  }, true);
+  applyCursor(true);
   // Ctrl/Cmd + scroll (or trackpad pinch) zooms at the pointer; plain scroll pans like a map.
   canvas.addEventListener('wheel', function(e){
     e.preventDefault();
@@ -1571,7 +1723,7 @@ window.ReplyLines = (() => {
   document.addEventListener('keydown', function(e){
     if (editing || (!selected && !armed) || e.target.closest('input,textarea,[contenteditable="true"]')) return;
     if (e.key==='Delete' || e.key==='Backspace'){
-      var f = find(selected); if (f && f.parent){ e.preventDefault(); remove(f.node); }
+      var f = find(selected); if (f && (f.parent || state.roots.length > 1)){ e.preventDefault(); remove(f.node); }
     } else if (e.key==='Enter' && selected){ startEdit(selected); }
     else if (e.key==='Escape'){ selected = null; render(); }
     else if (e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
@@ -1589,16 +1741,16 @@ window.ReplyLines = (() => {
   $('#fit').onclick = fit;
   $('#center').onclick = function(){ if (selected) centerOn(selected); else fit(); };
   $('#expand').onclick = function(){
-    (function walk(n){ n.collapsed = false; n.children.forEach(walk); })(state.root);
+    state.roots.forEach(function walk(n){ n.collapsed = false; n.children.forEach(walk); });
     save(); render();
   };
   $('#collapse').onclick = function(){
-    (function walk(n){ if (n!==state.root && n.children.length) n.collapsed = true; n.children.forEach(walk); })(state.root);
+    state.roots.forEach(function(r){ (function walk(n){ if (n!==r && n.children.length) n.collapsed = true; n.children.forEach(walk); })(r); });
     save(); render();
   };
   $('#reset').onclick = function(){
     if (!confirm('Clear this map and start over with one message?')) return;
-    state = {root: starter()}; selected = null; editing = null;
+    Pick.close(true); state = {roots: [starter()]}; selected = null; editing = null;
     save(); render(); fit();
   };
   $('#zin').onclick  = function(){ var c = viewCenter(); setZoomAt(zoom*1.2, c.x, c.y); };
