@@ -45,7 +45,7 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 .bubble.me.tail::after{background-image:var(--blue-grad);background-repeat:no-repeat;background-size:100% var(--gh,874px);background-position:0 var(--gy2,-790px)}
 .bubble.them.tail::after{right:auto;left:7.608px;transform:scaleX(-1)}
 /* highlights follow the whole bubble outline, tail included */
-.node.sel .bubble{filter:drop-shadow(1.5px 0 0 #111) drop-shadow(-1.5px 0 0 #111) drop-shadow(0 1.5px 0 #111) drop-shadow(0 -1.5px 0 #111)}
+/* a selected message sits on a glass plate (.plate), with its actions as keycap chips (.tb.kc) */
 .node.hl .bubble{filter:drop-shadow(0 0 3px rgba(2,138,254,.85))}
 .node.armed .bubble{filter:drop-shadow(0 0 3.5px rgba(2,138,254,.95))}
 .bubble.editing{cursor:text;user-select:text;outline:none;filter:drop-shadow(0 0 2.5px rgba(2,138,254,.95))}
@@ -161,14 +161,57 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 .np.has-hot .np-chip:not(.hot){opacity:.62}
 .bubble.pop{animation:npPop .45s var(--np-spring) both}
 @keyframes npPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+/* ---- toolbar: grouped glass ---- */
+.tbar .actions{gap:8px}
+.tbar .zoombar{gap:8px}
+.tbar .grp{display:flex;overflow:hidden;border:1px solid rgba(255,255,255,.4);border-radius:11px;background:rgba(255,255,255,.17)}
+.tbar .grp button{height:34px;padding:0 14px;border:0;border-radius:0;background:transparent;color:inherit;font-size:14px;line-height:1}
+.tbar .grp button+button{border-left:1px solid rgba(255,255,255,.26)}
+.tbar .grp button:hover,.tbar .gear:hover,.tbar .zoom button:hover{background:rgba(255,255,255,.18)}
+.tbar .grp button:active,.tbar .gear:active,.tbar .zoom button:active{background:rgba(255,255,255,.28)}
+.tbar .grp.prim{border-color:#fff;background:#fff}
+.tbar .grp.prim button{display:flex;align-items:center;gap:7px;color:#4B3FA0;font-weight:600}
+.tbar .grp.prim button:hover{background:#F1EEFF}
+.tbar .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tbar .ico.fill{fill:currentColor;stroke:none}
+.tbar .gear{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid rgba(255,255,255,.4);border-radius:11px;background:rgba(255,255,255,.17);color:inherit}
+.tbar .zoom{display:flex;align-items:center;overflow:hidden;border:1px solid rgba(255,255,255,.4);border-radius:11px;background:rgba(255,255,255,.17)}
+.tbar .zoom button{display:grid;place-items:center;width:36px;height:34px;padding:0;border:0;border-radius:0;background:transparent;color:inherit}
+.tbar .zoom #zl{width:auto;min-width:56px;padding:0 4px;font-size:14px;font-variant-numeric:tabular-nums}
+.tbar [data-tip]{position:relative}
+.tbar [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);z-index:40;padding:5px 8px;border-radius:6px;background:rgba(20,14,50,.94);color:#fff;font-size:12px;line-height:1;white-space:nowrap;transform:translateX(-50%);pointer-events:none}
+.tbar button:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+body:not(.t7) .tbar .grp,body:not(.t7) .tbar .gear,body:not(.t7) .tbar .zoom{background:#f5f5f7;border-color:#d1d1d6}
+/* ---- a selected message: glass plate and keycap chips ---- */
+.plate{position:absolute;border-radius:28px;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.48);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 10px 26px rgba(20,10,60,.25);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none}
+.plate.enter{animation:plateIn .4s var(--np-spring) both}
+@keyframes plateIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+body:not(.t7) .plate{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);box-shadow:0 8px 22px rgba(0,0,0,.12)}
+.t7 .tb.kc,.tb.kc{top:-46px;gap:6px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;transform-origin:50% 100%}
+.tb.kc.enter{animation:kcIn .38s var(--np-spring) both}
+@keyframes kcIn{from{opacity:0;transform:translateX(-50%) translateY(6px) scale(.88)}to{opacity:1;transform:translateX(-50%)}}
+.t7 .tb.kc button,.tb.kc button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 11px;border:0;border-radius:14px;background:rgba(255,255,255,.93);color:#1D1D1F;font-size:13px;font-weight:600;line-height:1;box-shadow:0 4px 12px rgba(20,10,60,.25);transition:box-shadow .15s,background .15s}
+.t7 .tb.kc button:hover,.tb.kc button:hover{background:#fff;box-shadow:0 0 0 2px #fff,0 4px 12px rgba(20,10,60,.3)}
+.t7 .tb.kc button.warn,.tb.kc button.warn{color:#D7261E}
+.tb.kc kbd{padding:2px 5px;border-radius:4px;background:rgba(0,0,0,.1);font:600 10px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
+/* moving a selected message: it lifts, and its replies come along */
+.node.sel .bubble:not(.editing){cursor:var(--cur-move,move)}
+.node.lifting .bubble{transform:scale(1.04);filter:drop-shadow(0 16px 24px rgba(20,10,60,.42))}
+.node.lifting .tb{display:none}
+.node.dropped .bubble{animation:msgDrop .42s var(--np-spring) both}
+@keyframes msgDrop{from{transform:scale(1.04);filter:drop-shadow(0 16px 24px rgba(20,10,60,.42))}to{transform:none;filter:none}}
+#canvas.msg-drag,#canvas.msg-drag *{cursor:var(--cur-grab,grabbing)!important}
 </style></head>
 <body class="t7"><main class="page">
 <h1>Brainstorm</h1>
-<div class="ctl-row"><div class="actions">
-<button id="play">Play a path</button><button id="fit">Fit</button><button id="center">Center selected</button><button id="expand">Expand all</button><button id="collapse">Collapse all</button><button id="reset">Reset map</button><button id="settings">Settings</button>
-</div><div class="zoombar"><button id="zout">−</button><input id="zs" type="range" min="40" max="200" value="100"><button id="zin">+</button><span id="zl">100%</span></div></div>
+<div class="ctl-row tbar"><div class="actions">
+<div class="grp prim"><button id="play"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.4v9.2l7.6-4.6z"/></svg>Play a path</button></div>
+<div class="grp"><button id="fit">Fit</button><button id="center">Center selected</button></div>
+<div class="grp"><button id="expand">Expand all</button><button id="collapse">Collapse all</button></div>
+<div class="grp"><button id="reset">Reset map</button></div>
+</div><div class="zoombar"><button id="settings" class="gear" data-tip="Settings" aria-label="Settings"><svg class="ico fill" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M13.17 6.62L15.21 6.86L15.21 9.14L13.17 9.38L12.63 10.67L13.91 12.29L12.29 13.91L10.68 12.63L9.38 13.17L9.14 15.21L6.86 15.21L6.62 13.17L5.33 12.63L3.71 13.91L2.09 12.29L3.37 10.67L2.83 9.38L0.79 9.14L0.79 6.86L2.83 6.62L3.37 5.32L2.09 3.71L3.71 2.09L5.32 3.37L6.62 2.83L6.86 0.79L9.14 0.79L9.38 2.83L10.68 3.37L12.29 2.09L13.91 3.71L12.63 5.32ZM8 5.55a2.45 2.45 0 1 0 0 4.9 2.45 2.45 0 1 0 0-4.9Z"/></svg></button><div class="zoom" role="group" aria-label="Zoom"><button id="zout" aria-label="Zoom out"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 8h9.2"/></svg></button><button id="zl" title="Back to 100%">100%</button><button id="zin" aria-label="Zoom in"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg></button></div></div></div>
 <div id="canvas"><div id="world"></div></div>
-<p class="hint">Double-click a bubble to edit it. Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it. Press Reply to add manually, Delete to remove. Drag empty space to pan. Ctrl + click empty space to start a new message. Scroll to pan, Ctrl + scroll to zoom.</p>
+<p class="hint">Click a bubble to select it, then drag it to move it; its replies come along. Start typing or press Tab to reply, Enter to edit, ← and → to fold and unfold, Delete to remove. Hover over a bubble for a moment and type to branch from it. Drag empty space to pan. Ctrl + click empty space to start a new message. Scroll to pan; pinch or Ctrl + scroll to zoom.</p>
 </main>
 <script>window.PAGE_SEED="Can you send me the photos?";</script>
 <script>
@@ -1283,7 +1326,7 @@ window.ReplyLines = (() => {
 
   // ---- data: every message is written by the user ----
   var nid = 1, selected = null, editing = null, zoom = 1, panX = 0, panY = 0;
-  var drag = null, playTimers = [];
+  var drag = null, playTimers = [], mdrag = null, dragRaf = 0, dropped = null, shownSel = null;
   var armed = null, armTimer = null, DWELL = 700;   // hover target and dwell time (ms)
   function mk(text, from){ return {id:'n'+(nid++), text:text, from:from, children:[], collapsed:false}; }
   function opp(f){ return f==='me' ? 'them' : 'me'; }
@@ -1323,26 +1366,26 @@ window.ReplyLines = (() => {
     var pos = {}, minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     state.roots.forEach(function(root){
       var mine = {}, maxD = 0, rowH = [];
-      function place(n, left, d){
-        var w = measure(n);
-        mine[n.id] = {x: left + w/2, y: 0, d: d};
+      function place(n, left, d, ox, oy){
+        var w = measure(n), o = n.off, ax = ox + (o ? o.x : 0), ay = oy + (o ? o.y : 0);   // a moved message carries its replies
+        mine[n.id] = {x: left + w/2 + ax, y: 0, d: d, oy: ay};
         rowH[d] = Math.max(rowH[d] || 0, hcache[n.id] || 41);
         if (d > maxD) maxD = d;
         if (!n.collapsed){
           var cur = left;
-          n.children.forEach(function(c){ var cw = measure(c); place(c, cur, d+1); cur += cw; });
+          n.children.forEach(function(c){ var cw = measure(c); place(c, cur, d+1, ax, ay); cur += cw; });
         }
         return w;
       }
-      place(root, root.at.x - measure(root)/2, 0);      // each flowchart is centered on its first message
+      place(root, root.at.x - measure(root)/2, 0, 0, 0);      // each flowchart is centered on its first message
       // A row is ROW tall, or taller when a long message needs it, so the space between messages never shrinks.
       var top = [0];
       for (var d = 1; d <= maxD; d++) top[d] = top[d-1] + Math.max(ROW, rowH[d-1] + ROW_GAP);
       for (var id in mine){
-        var p = mine[id]; p.y = root.at.y + top[p.d]; pos[id] = p;
+        var p = mine[id]; p.y = root.at.y + top[p.d] + p.oy; pos[id] = p;
         minX = Math.min(minX, p.x - SLOT/2); maxX = Math.max(maxX, p.x + SLOT/2); minY = Math.min(minY, p.y);
+        maxY = Math.max(maxY, p.y + Math.max(ROW, (hcache[id] || 41) + ROW_GAP));
       }
-      maxY = Math.max(maxY, root.at.y + top[maxD] + Math.max(ROW, rowH[maxD] + ROW_GAP));
     });
     return {pos:pos, W:Math.max(1, maxX), H:Math.max(1, maxY + 80), minX:minX, minY:minY, bw:maxX - minX, bh:maxY + 80 - minY};
   }
@@ -1382,15 +1425,18 @@ window.ReplyLines = (() => {
 
   // ---- DOM rendering ----
   function toolbar(n){
-    var t = document.createElement('div'); t.className = 'tb';
-    function btn(label, fn){
-      var b = document.createElement('button'); b.textContent = label;
+    // keycap chips: each action shows the key that does the same thing (letters start a reply, so none of these type)
+    var t = document.createElement('div'); t.className = 'tb kc' + (shownSel !== n.id ? ' enter' : '');
+    function btn(label, key, fn, cls){
+      var b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls;
+      b.appendChild(document.createTextNode(label + ' '));
+      var k = document.createElement('kbd'); k.textContent = key; b.appendChild(k);
       b.onclick = function(e){ e.stopPropagation(); fn(); }; t.appendChild(b);
     }
-    btn('Reply', function(){ reply(n); });
-    btn('Edit', function(){ startEdit(n.id); });
-    if (n.children.length) btn(n.collapsed ? 'Unfold' : 'Fold', function(){ n.collapsed = !n.collapsed; save(); render(); });
-    if (!isRoot(n) || state.roots.length > 1) btn('Delete', function(){ remove(n); });
+    btn('Reply', 'Tab', function(){ reply(n); });
+    btn('Edit', '⏎', function(){ startEdit(n.id); });
+    if (n.children.length) btn(n.collapsed ? 'Unfold' : 'Fold', n.collapsed ? '→' : '←', function(){ n.collapsed = !n.collapsed; save(); render(); });
+    if (!isRoot(n) || state.roots.length > 1) btn('Delete', '⌫', function(){ remove(n); }, 'warn');
     return t;
   }
   function nodeEl(n, p){
@@ -1412,6 +1458,8 @@ window.ReplyLines = (() => {
       };
     } else {
       b.onclick = function(e){ e.stopPropagation(); if (selected!==n.id){ selected = n.id; render(); } };
+      // a press on the selected message can become a move once the pointer travels a few pixels
+      b.onpointerdown = function(e){ if (selected === n.id && e.button === 0 && !e.ctrlKey && !e.metaKey && !e.altKey) mdrag = {id: n.id, x: e.clientX, y: e.clientY, pid: e.pointerId, moved: false}; };
       b.ondblclick = function(e){ e.stopPropagation(); startEdit(n.id); };
     }
     b.onmouseenter = function(){
@@ -1423,7 +1471,13 @@ window.ReplyLines = (() => {
       if (armed === n.id){ armed = null; showArm(); }
     };
     el.appendChild(b);
-    if (selected === n.id && editing !== n.id) el.appendChild(toolbar(n));
+    if (selected === n.id && editing !== n.id){
+      var pl = document.createElement('i'); pl.className = 'plate' + (shownSel !== n.id ? ' enter' : '');
+      el.insertBefore(pl, b);                    // sized to the bubble once it is on the page (render)
+      el.appendChild(toolbar(n));
+    }
+    if (mdrag && mdrag.moved && mdrag.id === n.id) el.classList.add('lifting');
+    if (dropped === n.id) el.classList.add('dropped');
     if (n.children.length && n.collapsed){
       var m = document.createElement('button'); m.className = 'more';
       m.textContent = '+' + n.children.length + ' replies';
@@ -1439,7 +1493,6 @@ window.ReplyLines = (() => {
   }
   function applyView(){
     $('#world').style.transform = 'translate('+panX+'px,'+panY+'px) scale('+zoom+')';
-    $('#zs').value = Math.round(zoom*100);
     $('#zl').textContent = Math.round(zoom*100) + '%';
     tint();
   }
@@ -1488,6 +1541,9 @@ window.ReplyLines = (() => {
     var grew = false;
     items.forEach(function(it){ var h = it.b.offsetHeight; if (hcache[it.n.id] !== h){ hcache[it.n.id] = h; grew = true; } });
     if (grew){ L = layout(); items.forEach(function(it){ it.el.style.top = L.pos[it.n.id].y + 'px'; }); }
+    var plate = w.querySelector('.node.sel .plate');
+    if (plate){ var pb = plate.parentNode.querySelector('.bubble'); plate.style.left = (pb.offsetLeft - 11) + 'px'; plate.style.top = (pb.offsetTop - 9) + 'px'; plate.style.width = (pb.offsetWidth + 22) + 'px'; plate.style.height = (pb.offsetHeight + 23) + 'px'; }
+    shownSel = selected;                         // the plate and chips spring in only when the selection changes
     w.style.width = L.W + 'px'; w.style.height = L.H + 'px';
     [svg, overSvg].forEach(function(s){ s.setAttribute('width', L.W); s.setAttribute('height', L.H); });
     ReplyLines.draw({
@@ -1638,6 +1694,7 @@ window.ReplyLines = (() => {
   })();
   // the pointer shows what a press on empty space would do right now
   function applyCursor(force){
+    if (force){ var ds = document.documentElement.style; ds.setProperty('--cur-move', CUR.idle); ds.setProperty('--cur-grab', CUR.grab); }   // for moving a selected message
     var st = Pick.el ? 'menu' : drag ? 'grab' : mod ? 'create' : 'idle';
     if (st === curState && !force) return;
     curState = st; canvas.style.cursor = CUR[st];
@@ -1708,10 +1765,91 @@ window.ReplyLines = (() => {
     e.preventDefault(); e.stopImmediatePropagation();
   }, true);
   applyCursor(true);
+
+  // ---- moving a selected message: press it and drag; its replies come along ----
+  canvas.addEventListener('pointermove', function(e){
+    if (!mdrag || e.pointerId !== mdrag.pid) return;
+    if (!(e.buttons & 1)){ if (mdrag.moved) endMsgDrag(e); else mdrag = null; return; }   // the button came up outside the page
+    var dx = (e.clientX - mdrag.x) / zoom, dy = (e.clientY - mdrag.y) / zoom;
+    if (!mdrag.moved){
+      if (Math.abs(e.clientX - mdrag.x) + Math.abs(e.clientY - mdrag.y) < 5) return;
+      var f = find(mdrag.id); if (!f){ mdrag = null; return; }
+      mdrag.moved = true; mdrag.node = f.node; mdrag.root = !f.parent;
+      mdrag.base = f.parent ? {x: f.node.off ? f.node.off.x : 0, y: f.node.off ? f.node.off.y : 0} : {x: f.node.at.x, y: f.node.at.y};
+      stopPlay(); clearTimeout(armTimer); if (armed){ armed = null; }
+      try { canvas.setPointerCapture(e.pointerId); } catch(err){}
+      canvas.classList.add('msg-drag');
+    }
+    // a flowchart's first message moves the whole flowchart; any other message gets an offset of its own
+    var to = {x: mdrag.base.x + dx, y: mdrag.base.y + dy};
+    if (mdrag.root) mdrag.node.at = to; else mdrag.node.off = to;
+    if (!dragRaf) dragRaf = requestAnimationFrame(function(){ dragRaf = 0; render(); });
+  });
+  function endMsgDrag(e){
+    if (!mdrag || (e && e.pointerId != null && e.pointerId !== mdrag.pid)) return;
+    var m = mdrag; mdrag = null;
+    if (!m.moved) return;
+    canvas.classList.remove('msg-drag');
+    if (dragRaf){ cancelAnimationFrame(dragRaf); dragRaf = 0; }
+    if (!m.root && m.node.off && Math.abs(m.node.off.x) < 0.5 && Math.abs(m.node.off.y) < 0.5) delete m.node.off;
+    dropped = m.id; save(); render(); dropped = null;
+  }
+  canvas.addEventListener('pointerup', endMsgDrag);
+  canvas.addEventListener('pointercancel', endMsgDrag);
+
+  // ---- two-finger zoom ----
+  // Trackpad pinch arrives as Ctrl + scroll in Chrome, Edge and Firefox (the wheel handler below).
+  // Touchscreens send two pointers, handled here, and Safari sends its own gesture events, handled after.
+  var touches = new Map(), pinch = null, pinchEnd = 0, gz = null;
+  function pinchNow(){
+    var p = Array.from(touches.values()), r = canvas.getBoundingClientRect();
+    return {mx: (p[0].x + p[1].x)/2 - r.left, my: (p[0].y + p[1].y)/2 - r.top, d: Math.max(1, Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y))};
+  }
+  canvas.addEventListener('pointerdown', function(e){
+    if (e.pointerType !== 'touch') return;
+    touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if (touches.size < 2) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if (touches.size > 2 || pinch) return;
+    // a second finger turns whatever the first one started into a pinch
+    if (drag){ drag = null; canvas.classList.remove('grabbing'); applyCursor(); }
+    if (mdrag){ if (mdrag.moved) endMsgDrag(); else mdrag = null; }
+    if (Pick.el) Pick.close(true);
+    stopPlay();
+    var q = pinchNow(); pinch = {z0: zoom, d0: q.d, wx: (q.mx - panX)/zoom, wy: (q.my - panY)/zoom};
+    touches.forEach(function(v, id){ try { canvas.setPointerCapture(id); } catch(err){} });
+  }, true);
+  canvas.addEventListener('pointermove', function(e){
+    if (e.pointerType !== 'touch' || !touches.has(e.pointerId)) return;
+    touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if (!pinch || touches.size < 2) return;
+    e.stopImmediatePropagation();
+    var q = pinchNow();
+    zoom = clamp(pinch.z0 * q.d / pinch.d0, 0.4, 2);
+    panX = q.mx - pinch.wx*zoom; panY = q.my - pinch.wy*zoom;     // the spot between your fingers stays under them
+    applyView();
+  }, true);
+  function liftTouch(e){
+    if (e.pointerType !== 'touch') return;
+    touches.delete(e.pointerId);
+    if (pinch){ e.stopImmediatePropagation(); if (touches.size < 2){ pinch = null; pinchEnd = performance.now(); } }
+  }
+  canvas.addEventListener('pointerup', liftTouch, true);
+  canvas.addEventListener('pointercancel', liftTouch, true);
+  // lifting the fingers after a pinch is not a click on whatever was under them
+  canvas.addEventListener('click', function(e){ if (performance.now() - pinchEnd < 500 || touches.size > 1){ e.stopPropagation(); e.preventDefault(); } }, true);
+  canvas.addEventListener('gesturestart', function(e){
+    e.preventDefault(); if (touches.size) return;
+    var r = canvas.getBoundingClientRect(), x = e.clientX != null ? e.clientX : r.left + r.width/2, y = e.clientY != null ? e.clientY : r.top + r.height/2;
+    gz = {z0: zoom, x: x - r.left, y: y - r.top};
+  });
+  canvas.addEventListener('gesturechange', function(e){ e.preventDefault(); if (gz && !touches.size) setZoomAt(gz.z0 * e.scale, gz.x, gz.y); });
+  canvas.addEventListener('gestureend', function(e){ e.preventDefault(); gz = null; });
   // Ctrl/Cmd + scroll (or trackpad pinch) zooms at the pointer; plain scroll pans like a map.
   canvas.addEventListener('wheel', function(e){
     e.preventDefault();
     if (e.ctrlKey || e.metaKey){
+      if (gz) return;                            // Safari is already zooming through its own pinch gesture
       var r = canvas.getBoundingClientRect();
       setZoomAt(zoom * Math.exp(-e.deltaY*0.01), e.clientX - r.left, e.clientY - r.top);
     } else {
@@ -1726,6 +1864,13 @@ window.ReplyLines = (() => {
       var f = find(selected); if (f && (f.parent || state.roots.length > 1)){ e.preventDefault(); remove(f.node); }
     } else if (e.key==='Enter' && selected){ startEdit(selected); }
     else if (e.key==='Escape'){ selected = null; render(); }
+    else if (e.key==='Tab' && selected && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && !e.target.closest('button,a,select')){
+      var tf = find(selected); if (tf){ e.preventDefault(); reply(tf.node); }
+    }
+    else if ((e.key==='ArrowLeft' || e.key==='ArrowRight') && selected && !e.altKey && !e.ctrlKey && !e.metaKey){
+      var af = find(selected), fold = e.key==='ArrowLeft';
+      if (af && af.node.children.length && !!af.node.collapsed !== fold){ e.preventDefault(); af.node.collapsed = fold; save(); render(); }
+    }
     else if (e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
       // Type-to-reply: the first typed character starts a reply under the selected bubble.
       // Focus stays in that reply, so the remaining keystrokes finish it.
@@ -1755,7 +1900,7 @@ window.ReplyLines = (() => {
   };
   $('#zin').onclick  = function(){ var c = viewCenter(); setZoomAt(zoom*1.2, c.x, c.y); };
   $('#zout').onclick = function(){ var c = viewCenter(); setZoomAt(zoom/1.2, c.x, c.y); };
-  $('#zs').oninput   = function(){ var c = viewCenter(); setZoomAt(+this.value/100, c.x, c.y); };
+  $('#zl').onclick   = function(){ var c = viewCenter(); setZoomAt(1, c.x, c.y); };     // the percentage goes back to 100%
 
 
   // ---- bubble text calibration: makes whatever font is available match iOS's SF Pro text

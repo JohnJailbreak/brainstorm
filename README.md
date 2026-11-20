@@ -4,7 +4,8 @@ Brainstorm is a message-mapping tool. Write the message you plan to send, then b
 
 - Double-click a bubble to edit it.
 - Select a bubble and start typing to reply, or hover over one for a moment and type to branch from it.
-- Drag empty space to pan. Ctrl/Cmd + scroll to zoom.
+- Drag empty space to pan, or scroll. Pinch on a trackpad or touchscreen, or Ctrl/Cmd + scroll, to zoom at that spot.
+- Click a message to select it, then drag it to move it; its replies come along.
 - Ctrl + click empty space (or Cmd + click on a Mac) to start a new flowchart. The picker opens as you press: slide to Received (gray) or Sent (blue) and let go, or let go first and click one. R and S choose too, and Esc closes it.
 - Play a path walks the flowchart you have selected (or any one of them, each with the same chance), picking one reply at random at every branch. Each reply at a branch has the same chance, and the path is lit only while it plays.
 - Your map is saved in your browser.
@@ -32,6 +33,18 @@ A line animates only when it appears or while Play a path walks it. Lines alread
 | Intelligence (default) | Light in Siri's colors runs down each new line and rings the reply. |
 | Siri wave | Soft waves along every line that swell when a reply arrives. |
 | Invisible Ink | Sparkles drift down every line; new replies arrive covered in ink. |
+
+## Selecting and moving
+
+Click a message to select it. It rises onto a pane of glass, and its actions appear above it as chips that show their keys: Reply (Tab), Edit (Enter), Fold and Unfold (← and →), and Delete (Delete or Backspace). Letters are left alone, because typing any letter starts a reply.
+
+Press a selected message and drag it to move it. It lifts while you drag, and its replies come along. Dragging a flowchart's first message moves the whole flowchart. Where you put things is saved with the map.
+
+## Toolbar and zoom
+
+The buttons sit in glass groups: Play a path on its own, Fit with Center selected, Expand all with Collapse all, and Reset map. Settings is the gear at the right, next to the zoom: minus, the current percentage, and plus. Click the percentage to go back to 100%.
+
+Two-finger zoom works on the canvas everywhere: a trackpad pinch (which Chrome, Edge and Firefox send as Ctrl + scroll), two fingers on a touchscreen, and Safari's own pinch gesture. The zoom follows your fingers, so the spot between them stays put.
 
 ## Pointer and flowcharts
 
