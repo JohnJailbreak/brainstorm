@@ -182,6 +182,37 @@ button{font:inherit;font-size:14px;padding:7px 12px;border-radius:10px;border:1p
 .tbar [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);z-index:40;padding:5px 8px;border-radius:6px;background:rgba(20,14,50,.94);color:#fff;font-size:12px;line-height:1;white-space:nowrap;transform:translateX(-50%);pointer-events:none}
 .tbar button:focus-visible{outline:2px solid #fff;outline-offset:-3px}
 body:not(.t7) .tbar .grp,body:not(.t7) .tbar .gear,body:not(.t7) .tbar .zoom{background:#f5f5f7;border-color:#d1d1d6}
+/* ---- account: sign in with Google to save the map to your account ---- */
+.tbar .acct{position:relative}
+.tbar .acct .av{width:24px;height:24px;border-radius:50%;object-fit:cover;display:block}
+.tbar .acct .ini,.acctpop .ini{display:grid;place-items:center;background:#fff;color:#4B3FA0;font:700 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
+.tbar .acct .dot{position:absolute;right:2px;bottom:2px;width:9px;height:9px;border-radius:50%;background:#34C759;box-shadow:0 0 0 2px #6E5AC8}
+.tbar .acct .dot.busy{background:#FFB020}.tbar .acct .dot.err{background:#FF453A}.tbar .acct .dot.idle{display:none}
+.acctpop{position:fixed;z-index:80;width:288px;padding:16px;border-radius:16px;background:rgba(251,250,255,.98);color:#1D1B2E;box-shadow:0 18px 44px rgba(20,10,60,.35),0 0 0 1px rgba(20,10,60,.06);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,sans-serif}
+.acctpop[hidden]{display:none}
+.acctpop h3{margin:0 0 4px;font-size:15px}
+.acctpop p{margin:0 0 12px;color:#5F5B76;font-size:13px}
+.acctpop p.err{color:#C4271F}
+.acctpop .who{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.acctpop .who .big{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:none;font-size:16px}
+.acctpop .who b{display:block;font-size:14px}.acctpop .who div span{display:block;color:#5F5B76;font-size:12px;word-break:break-all}
+.acctpop .ini{background:#6C5CE7;color:#fff}
+.tbar .acct[aria-expanded="true"]:hover::after{display:none}
+.acctpop .st{display:flex;align-items:center;gap:7px}
+.acctpop .st::before{content:"";width:8px;height:8px;border-radius:50%;background:#34C759;flex:none}
+.acctpop .st.busy::before{background:#FFB020}.acctpop .st.err{color:#C4271F}.acctpop .st.err::before{background:#FF453A}.acctpop .st.idle::before{display:none}
+.acctpop button{display:block;width:100%;height:38px;border-radius:10px;font:600 14px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;cursor:pointer}
+.acctpop .gbtn{border:1px solid #DADCE0;background:#fff;color:#1F1F1F}.acctpop .gbtn:hover{background:#F6F7F9}
+.acctpop .plain{border:1px solid rgba(20,10,60,.14);background:transparent;color:#4B3FA0}.acctpop .plain:hover{background:rgba(91,75,196,.08)}
+.acctpop button+button{margin-top:8px}
+.acctpop button:focus-visible,.syncdlg button:focus-visible{outline:3px solid #6C5CE7;outline-offset:2px}
+.syncdlg{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:rgba(18,12,40,.45);padding:20px}
+.syncdlg .box{width:min(380px,100%);padding:20px;border-radius:18px;background:#FBFAFF;color:#1D1B2E;box-shadow:0 24px 60px rgba(0,0,0,.35);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,sans-serif}
+.syncdlg h3{margin:0 0 6px;font-size:17px}.syncdlg p{margin:0 0 14px;color:#5F5B76;font-size:13.5px}
+.syncdlg button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(20,10,60,.14);background:#fff;color:#1D1B2E;font:600 14px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;cursor:pointer;text-align:left}
+.syncdlg button span{color:#5F5B76;font-weight:500;font-size:13px}
+.syncdlg button:hover{border-color:#6C5CE7;background:#F4F2FF}
+.syncdlg button+button{margin-top:8px}
 /* ---- a selected message: glass plate and keycap chips ---- */
 .plate{position:absolute;border-radius:28px;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.48);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 10px 26px rgba(20,10,60,.25);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none}
 .plate.enter{animation:plateIn .4s var(--np-spring) both}
@@ -209,7 +240,7 @@ body:not(.t7) .plate{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);box
 <div class="grp"><button id="fit">Fit</button><button id="center">Center selected</button></div>
 <div class="grp"><button id="expand">Expand all</button><button id="collapse">Collapse all</button></div>
 <div class="grp"><button id="reset">Reset map</button></div>
-</div><div class="zoombar"><button id="settings" class="gear" data-tip="Settings" aria-label="Settings"><svg class="ico fill" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M13.17 6.62L15.21 6.86L15.21 9.14L13.17 9.38L12.63 10.67L13.91 12.29L12.29 13.91L10.68 12.63L9.38 13.17L9.14 15.21L6.86 15.21L6.62 13.17L5.33 12.63L3.71 13.91L2.09 12.29L3.37 10.67L2.83 9.38L0.79 9.14L0.79 6.86L2.83 6.62L3.37 5.32L2.09 3.71L3.71 2.09L5.32 3.37L6.62 2.83L6.86 0.79L9.14 0.79L9.38 2.83L10.68 3.37L12.29 2.09L13.91 3.71L12.63 5.32ZM8 5.55a2.45 2.45 0 1 0 0 4.9 2.45 2.45 0 1 0 0-4.9Z"/></svg></button><div class="zoom" role="group" aria-label="Zoom"><button id="zout" aria-label="Zoom out"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 8h9.2"/></svg></button><button id="zl" title="Back to 100%">100%</button><button id="zin" aria-label="Zoom in"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg></button></div></div></div>
+</div><div class="zoombar"><button id="account" class="gear acct" data-tip="Sign in to save" aria-label="Sign in to save this map" aria-haspopup="dialog" aria-expanded="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5.4" r="2.6"/><path d="M2.9 13.6c.7-2.6 2.7-4.1 5.1-4.1s4.4 1.5 5.1 4.1"/></svg></button><button id="settings" class="gear" data-tip="Settings" aria-label="Settings"><svg class="ico fill" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M13.17 6.62L15.21 6.86L15.21 9.14L13.17 9.38L12.63 10.67L13.91 12.29L12.29 13.91L10.68 12.63L9.38 13.17L9.14 15.21L6.86 15.21L6.62 13.17L5.33 12.63L3.71 13.91L2.09 12.29L3.37 10.67L2.83 9.38L0.79 9.14L0.79 6.86L2.83 6.62L3.37 5.32L2.09 3.71L3.71 2.09L5.32 3.37L6.62 2.83L6.86 0.79L9.14 0.79L9.38 2.83L10.68 3.37L12.29 2.09L13.91 3.71L12.63 5.32ZM8 5.55a2.45 2.45 0 1 0 0 4.9 2.45 2.45 0 1 0 0-4.9Z"/></svg></button><div class="zoom" role="group" aria-label="Zoom"><button id="zout" aria-label="Zoom out"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 8h9.2"/></svg></button><button id="zl" title="Back to 100%">100%</button><button id="zin" aria-label="Zoom in"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg></button></div></div></div>
 <div id="canvas"><div id="world"></div></div>
 <p class="hint">Click a bubble to select it, then drag it to move it; its replies come along. Start typing or press Tab to reply, Enter to edit, ← and → to fold and unfold, Delete to remove. Hover over a bubble for a moment and type to branch from it. Drag empty space to pan. Ctrl + click empty space to start a new message. Scroll to pan; pinch or Ctrl + scroll to zoom.</p>
 </main>
@@ -1346,7 +1377,27 @@ window.ReplyLines = (() => {
   } catch(e){}
   if (!state) state = {roots: [starter()]};
   function isRoot(n){ return state.roots.indexOf(n) >= 0; }
-  function save(){ try { localStorage.setItem(PAGE_KEY, JSON.stringify(state)); } catch(e){} }
+  function save(){
+    var json = JSON.stringify(state);
+    try { localStorage.setItem(PAGE_KEY, json); } catch(e){}
+    var B = window.Brainstorm; if (B && B.onSave) B.onSave(json);
+  }
+  // ---- account bridge: the sign-in module at the end of the page uses this to save the map to a Google account ----
+  window.Brainstorm = {
+    key: PAGE_KEY,
+    get: function(){ return JSON.stringify(state); },
+    blank: function(){ var r = state.roots; return r.length === 1 && !r[0].children.length && r[0].text === (window.PAGE_SEED || 'Message you are planning to send'); },
+    replace: function(json){
+      var s; try { s = JSON.parse(json); } catch(e){ return false; }
+      if (s && s.root && !s.roots){ s.root.at = {x: measure(s.root)/2, y: 0}; s = {roots: [s.root]}; }
+      if (!s || !s.roots || !s.roots.length) return false;
+      s.roots.forEach(function(r){ bumpIds(r); if (!r.at) r.at = {x: SLOT/2, y: 0}; });
+      Pick.close(true); state = s; selected = null; editing = null;
+      try { localStorage.setItem(PAGE_KEY, json); } catch(e){}
+      render(); fit(); return true;
+    },
+    onSave: null
+  };
 
   function find(id, n, parent){
     if (!n){ for (var k = 0; k < state.roots.length; k++){ var hit = find(id, state.roots[k], null); if (hit) return hit; } return null; }
@@ -1964,4 +2015,129 @@ window.ReplyLines = (() => {
     if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', recalibrate);
   }
 })();
-</script></body></html>
+</script>
+<script type="module">
+/* ---- Saving to a Google account (Firebase Authentication and Cloud Firestore) ----
+   Paste your Firebase web app config here: Firebase console > Project settings > General > Your apps > SDK setup and configuration > Config.
+   These values are not secret. The Firestore rules in README.md are what keep each person's maps private. */
+const firebaseConfig = {
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: ''
+};
+const SDK = 'https://www.gstatic.com/firebasejs/13.4.0/';
+
+const B = window.Brainstorm, btn = document.getElementById('account'), ICON = btn.innerHTML;
+const ready = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.authDomain);
+let A = null, F = null, auth = null, db = null, user = null, timer = null, pending = null, lastSent = null, unsub = null, asking = false, st = { kind: 'idle', text: '' };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const hash = s => { let a = 0xdeadbeef ^ s.length, b = 0x41c6ce57 ^ s.length; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); a = Math.imul(a ^ c, 2654435761); b = Math.imul(b ^ c, 1597334677); } a = Math.imul(a ^ (a >>> 16), 2246822507) ^ Math.imul(b ^ (b >>> 13), 3266489909); b = Math.imul(b ^ (b >>> 16), 2246822507) ^ Math.imul(a ^ (a >>> 13), 3266489909); return (4294967296 * (2097151 & b) + (a >>> 0)).toString(36); };
+// The last copy this browser and the account agreed on, kept as a fingerprint so a sign-in can tell which side changed.
+const skey = uid => 'brainstorm:synced:' + uid + ':' + B.key;
+const synced = uid => localStorage.getItem(skey(uid));
+const markSynced = (uid, json) => { try { localStorage.setItem(skey(uid), hash(json)); } catch (e) { /* storage full */ } };
+const same = (json, h) => h != null && hash(json) === h;
+const count = json => { let n = 0; try { const w = m => { n++; (m.children || []).forEach(w); }; (JSON.parse(json).roots || []).forEach(w); } catch (e) { /* unreadable */ } return n; };
+const ref = uid => F.doc(db, 'users', uid, 'maps', B.key.replace(/\//g, '_'));
+
+/* ---- the account button and its menu ---- */
+const pop = document.createElement('div'); pop.className = 'acctpop'; pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Account'); document.body.appendChild(pop);
+const face = (u, cls) => u.photoURL ? `<img class="${cls}" src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">` : `<span class="${cls} ini">${esc((u.displayName || u.email || '?').trim().charAt(0).toUpperCase())}</span>`;
+function paint() {
+  if (user) { btn.innerHTML = face(user, 'av') + `<span class="dot ${st.kind}"></span>`; btn.dataset.tip = st.text || 'Account'; btn.setAttribute('aria-label', 'Account. ' + (st.text || 'Signed in')); }
+  else { btn.innerHTML = ICON; btn.dataset.tip = 'Sign in to save'; btn.setAttribute('aria-label', 'Sign in to save this map'); }
+  if (!ready) pop.innerHTML = '<h3>Sign-in isn\u2019t set up yet</h3><p>Add your Firebase settings to index.html to turn on saving to a Google account. README.md has the steps.</p>';
+  else if (!user) pop.innerHTML = `<h3>Save this map to your account</h3><p>Sign in with Google to keep this map in your account and open it on any device.</p>${st.kind === 'err' && st.text ? `<p class="err">${esc(st.text)}</p>` : ''}<button type="button" class="gbtn" data-act="in">Sign in with Google</button>`;
+  else pop.innerHTML = `<div class="who">${face(user, 'big')}<div><b>${esc(user.displayName || 'Signed in')}</b><span>${esc(user.email || '')}</span></div></div><p class="st ${st.kind}" role="status">${esc(st.text)}</p>${st.retry ? '<button type="button" class="plain" data-act="retry">Try again</button>' : ''}<button type="button" class="plain" data-act="out">Sign out</button>`;
+}
+function setStatus(kind, text, retry) { st = { kind, text, retry: !!retry }; paint(); }
+function place() { const r = btn.getBoundingClientRect(); pop.style.top = Math.round(r.bottom + 10) + 'px'; pop.style.left = Math.round(Math.max(8, Math.min(innerWidth - 296, r.right - 288))) + 'px'; }
+function closePop() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+btn.addEventListener('click', e => { e.stopPropagation(); if (!pop.hidden) { closePop(); return; } paint(); place(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); const f = pop.querySelector('button'); if (f) f.focus(); });
+document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !btn.contains(e.target)) closePop(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); closePop(); btn.focus(); } }, true);
+window.addEventListener('resize', () => { if (!pop.hidden) place(); });
+pop.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; if (a.dataset.act === 'in') signIn(); else if (a.dataset.act === 'out') signOutNow(); else if (a.dataset.act === 'retry') start(); });
+
+/* ---- signing in and out ---- */
+async function boot() {
+  paint(); if (!ready) return;
+  try {
+    const [app, a, f] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
+    A = a; F = f;
+    const fb = app.initializeApp(firebaseConfig);
+    auth = A.getAuth(fb);
+    // Writes are kept on this device until they reach the account, so closing the tab or going offline doesn't lose them.
+    db = F.initializeFirestore(fb, { localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) });
+    A.onAuthStateChanged(auth, u => { const was = user && user.uid; user = u; if (!u) stop(); paint(); if (u && u.uid !== was) start(); });
+  } catch (e) { setStatus('err', 'Sign-in couldn\u2019t load. Check your connection and reload the page.'); }
+}
+async function signIn() {
+  if (!auth) return;
+  try { await A.signInWithPopup(auth, new A.GoogleAuthProvider()); closePop(); }
+  catch (e) {
+    const c = (e && e.code) || '';
+    if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') { setStatus('idle', ''); return; }
+    setStatus('err', c === 'auth/popup-blocked' ? 'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.' : c === 'auth/unauthorized-domain' ? 'This site\u2019s address isn\u2019t on the sign-in list yet. In Firebase, add it under Authentication > Settings > Authorized domains.' : 'Sign-in didn\u2019t work. Please try again.');
+  }
+}
+async function signOutNow() {
+  const last = flush(); if (last) await Promise.race([last, new Promise(r => setTimeout(r, 3000))]);
+  stop(); await A.signOut(auth); setStatus('idle', ''); closePop();
+}
+function stop() { if (unsub) { unsub(); unsub = null; } B.onSave = null; clearTimeout(timer); timer = null; pending = null; }
+
+/* ---- the first sync after signing in: decide which copy wins ---- */
+async function start() {
+  const u = user; if (!u) return;
+  stop(); setStatus('busy', 'Checking your account\u2026');
+  let remote = null;
+  try { const snap = await F.getDoc(ref(u.uid)); remote = snap.exists() ? (snap.data().map || null) : null; }
+  catch (e) { if (user === u) setStatus('err', 'Couldn\u2019t reach your account. Your changes are still saved in this browser.', true); return; }
+  if (user !== u) return;
+  const local = B.get(), h = synced(u.uid);
+  if (remote == null) await push(local);                                                  // a new account: upload this map
+  else if (remote === local) { markSynced(u.uid, local); setStatus('ok', 'Saved to your account'); }
+  else if (B.blank() || same(local, h)) { B.replace(remote); markSynced(u.uid, remote); setStatus('ok', 'Opened the map saved in your account'); }   // only the account changed
+  else if (same(remote, h)) await push(local);                                             // only this browser changed
+  else { const k = await ask(local, remote); if (user !== u) return; if (k === 'local') await push(B.get()); else { B.replace(remote); markSynced(u.uid, remote); setStatus('ok', 'Opened the map saved in your account'); } }
+  if (user !== u) return;
+  B.onSave = schedule;
+  unsub = F.onSnapshot(ref(u.uid), snap => {                                              // another device saved: follow along if this browser has nothing unsaved
+    if (!snap.exists() || (snap.metadata && snap.metadata.hasPendingWrites)) return;
+    const m = snap.data().map; if (!m || m === lastSent) return;
+    const cur = B.get(); if (m === cur) { markSynced(u.uid, m); return; }
+    if (pending == null && same(cur, synced(u.uid))) { B.replace(m); markSynced(u.uid, m); setStatus('ok', 'Updated from another device'); }
+    else if (!asking) ask(cur, m).then(k => { if (user !== u) return; if (k === 'local') push(B.get()); else { pending = null; clearTimeout(timer); B.replace(m); markSynced(u.uid, m); setStatus('ok', 'Opened the map saved in your account'); } });
+  });
+}
+function ask(local, remote) {
+  asking = true;
+  return new Promise(res => {
+    const d = document.createElement('div'); d.className = 'syncdlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'syncT');
+    d.innerHTML = `<div class="box"><h3 id="syncT">Which map do you want to keep?</h3><p>This browser and your account both have changes to this map. Pick the one to keep; the other will be replaced.</p><button type="button" data-k="local"><b>This browser\u2019s map</b><span>${count(local)} messages</span></button><button type="button" data-k="remote"><b>Your account\u2019s map</b><span>${count(remote)} messages</span></button></div>`;
+    document.body.appendChild(d); d.querySelector('button').focus();
+    d.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; d.remove(); asking = false; res(b.dataset.k); flush(); });
+  });
+}
+
+/* ---- saving: shortly after each change, and right away when the tab is hidden ---- */
+function schedule(json) { pending = json; setStatus('busy', 'Saving\u2026'); clearTimeout(timer); timer = setTimeout(flush, 1500); }
+function flush() { clearTimeout(timer); timer = null; if (pending == null || asking || !user) return null; const j = pending; pending = null; return push(j); }
+async function push(json) {
+  const u = user; if (!u) return;
+  if (json.length > 900000) { setStatus('err', 'This map is too big to save to your account. It\u2019s still saved in this browser.'); return; }
+  lastSent = json;
+  setStatus('busy', navigator.onLine ? 'Saving\u2026' : 'Offline. Your changes will be saved to your account when you\u2019re back online.');
+  try { await F.setDoc(ref(u.uid), { map: json, updated: F.serverTimestamp() }); markSynced(u.uid, json); if (user === u && pending == null) setStatus('ok', 'Saved to your account'); }
+  catch (e) { if (user === u) setStatus('err', e && e.code === 'permission-denied' ? 'Your account wouldn\u2019t accept the save. Check the Firestore rules in README.md.' : 'Couldn\u2019t save to your account. Your changes are safe in this browser.'); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+window.addEventListener('pagehide', () => { flush(); });
+window.addEventListener('online', () => { if (user && st.kind === 'busy') setStatus('busy', 'Saving\u2026'); });
+boot();
+</script>
+</body></html>

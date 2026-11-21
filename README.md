@@ -72,3 +72,36 @@ Open `index.html` in any modern browser. No install or server is needed.
 4. After a minute, the site is live at `https://YOUR-USERNAME.github.io/brainstorm/`.
 
 Because the page is a single HTML file, it works on GitHub Pages without any build step.
+
+
+## Saving to a Google account
+
+Brainstorm always saves your map in the browser you're using. You can also sign in with Google so the map is kept in your account and opens on any device. This uses Firebase, which is free at this size. Setup takes about ten minutes, one time.
+
+1. Go to the [Firebase console](https://console.firebase.google.com), create a project, and keep the free Spark plan.
+2. Add a web app (the `</>` button). Skip Firebase Hosting. Copy the config values it shows into `firebaseConfig` near the end of `index.html`. These values aren't secret; the rules in step 6 are what keep each person's maps private.
+3. Open **Authentication**, choose **Get started**, then **Sign-in method** > **Google** > **Enable**. Pick a support email and save.
+4. In **Authentication** > **Settings** > **Authorized domains**, add your GitHub Pages address, such as `yourname.github.io`, without a path. `localhost` is already listed.
+5. Open **Firestore Database** and create a database. Choose **Standard edition** if asked, pick a location (it can't be changed later), and start in **production mode**.
+6. In Firestore's **Rules** tab, replace the rules with these and choose **Publish**:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/maps/{map} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```
+
+7. Try it locally: run `python3 -m http.server 8000` in this folder, open `http://localhost:8000`, and press the account button beside Settings. Then push to GitHub.
+
+How saving works once you're signed in:
+
+- Changes save to your account about 1.5 seconds after you stop, and right away when you switch tabs or close the page. Changes made offline are kept on the device and saved when you're back online.
+- The first time you sign in on a device, the newer side wins automatically. If both this browser and your account changed since they last matched, Brainstorm asks which map to keep.
+- If another device saves while this one has no unsaved changes, this one updates to match.
+- Signing out keeps the map in this browser; it just stops saving to your account.
+- Each page's map is stored at `users/<your id>/maps/<page key>` in Firestore. A map over about 900 KB stays in the browser only.
