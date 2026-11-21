@@ -2021,12 +2021,13 @@ window.ReplyLines = (() => {
    Paste your Firebase web app config here: Firebase console > Project settings > General > Your apps > SDK setup and configuration > Config.
    These values are not secret. The Firestore rules in README.md are what keep each person's maps private. */
 const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: ''
+  apiKey: 'AIzaSyD-XFzvIxt3DSdPZqp0vN1EoaSr1w1DVGw',
+  authDomain: 'brainstorm-cf6a6.firebaseapp.com',
+  projectId: 'brainstorm-cf6a6',
+  storageBucket: 'brainstorm-cf6a6.firebasestorage.app',
+  messagingSenderId: '867157889519',
+  appId: '1:867157889519:web:da8226788ce93ad4b3e61a',
+  measurementId: 'G-J0VE1LY9BY'
 };
 const SDK = 'https://www.gstatic.com/firebasejs/13.4.0/';
 
@@ -2081,7 +2082,7 @@ async function signIn() {
   catch (e) {
     const c = (e && e.code) || '';
     if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') { setStatus('idle', ''); return; }
-    setStatus('err', c === 'auth/popup-blocked' ? 'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.' : c === 'auth/unauthorized-domain' ? 'This site\u2019s address isn\u2019t on the sign-in list yet. In Firebase, add it under Authentication > Settings > Authorized domains.' : 'Sign-in didn\u2019t work. Please try again.');
+    setStatus('err', c === 'auth/popup-blocked' ? 'Your browser blocked the sign-in window. Allow pop-ups for this site and try again.' : c.indexOf('api-key') >= 0 ? 'The Firebase settings in index.html don\u2019t match your project. Copy the config again from Project settings > Your apps.' : (c === 'auth/operation-not-allowed' || c === 'auth/configuration-not-found') ? 'Google sign-in isn\u2019t turned on yet. In Firebase, open Authentication, choose Get started, and enable Google under Sign-in method.' : c === 'auth/unauthorized-domain' ? 'This site\u2019s address isn\u2019t on the sign-in list yet. In Firebase, add it under Authentication > Settings > Authorized domains.' : 'Sign-in didn\u2019t work. Please try again.');
   }
 }
 async function signOutNow() {
@@ -2096,7 +2097,7 @@ async function start() {
   stop(); setStatus('busy', 'Checking your account\u2026');
   let remote = null;
   try { const snap = await F.getDoc(ref(u.uid)); remote = snap.exists() ? (snap.data().map || null) : null; }
-  catch (e) { if (user === u) setStatus('err', 'Couldn\u2019t reach your account. Your changes are still saved in this browser.', true); return; }
+  catch (e) { const c = (e && e.code) || ''; if (user === u) setStatus('err', c === 'permission-denied' ? 'Your account wouldn\u2019t open the saved map. Check that the Firestore rules from README.md are published.' : c === 'not-found' ? 'The Firestore database isn\u2019t set up yet. Create it in Firebase, then try again.' : 'Couldn\u2019t reach your account. Your changes are still saved in this browser.', true); return; }
   if (user !== u) return;
   const local = B.get(), h = synced(u.uid);
   if (remote == null) await push(local);                                                  // a new account: upload this map
